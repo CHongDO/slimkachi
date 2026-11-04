@@ -8,7 +8,7 @@
   파일마다 설정 → 적용 → 확인 → 내보내기. 기능: 사진 용량 줄이기 · 사진 크기 조정 · 사진 형식 변환 · PDF 용량 줄이기
   · 문서(HWP·HWPX·DOCX·PPTX·XLSX) 용량 줄이기(문서 안 사진만).
 - **핵심 가치**: 업로드 없음. 모든 처리가 사용자 브라우저 안에서 끝난다.
-- **배포 대상**: Cloudflare Pages (정적 호스팅, 빌드 없음). 임시 도메인 `file-tool.pages.dev`
+- **배포 대상**: Cloudflare Pages (정적 호스팅, 빌드 없음). 임시 도메인 `slimkachi.pages.dev`
 - **수익화**: Google AdSense → 문서 페이지(pages/)와 SEO 메타 유지 필수
 
 ## 절대 원칙 (어기지 말 것)
@@ -273,7 +273,7 @@ python -m http.server 5500     # → http://localhost:5500
 - GitHub 저장소 연결 후 push 하면 자동 배포.
 
 ## 배포 전 체크리스트
-- [ ] `file-tool.pages.dev` → 실제 배포 주소로 전부 치환
+- [ ] `slimkachi.pages.dev` → 실제 배포 주소로 전부 치환
       (index.html의 canonical·og:url·og:image·JSON-LD url, pages/*.html canonical, sitemap.xml, robots.txt)
 - [ ] `ads.txt`가 루트에서 열리는지 확인 (`https://<주소>/ads.txt`)
 - [ ] AdSense 스크립트 client id(`ca-pub-1007112926199900`)가 ads.txt의 pub id와 일치
