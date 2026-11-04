@@ -1,0 +1,447 @@
+/* ============================================================
+   scene.css — 배경 장면 레이어 (모든 테마 팩 공용 구조)
+   ------------------------------------------------------------
+   <div class="scene" aria-hidden="true">   ← 맨 뒤 고정(z-index:-1), 클릭 통과(pointer-events:none)
+     .scene__sky          하늘 그라데이션
+     .scene__night        밤 묶음 (낮/밤 전환 때 묶음째 steps 페이드)
+       .scene__stars <i>×4 별 (1 = 고정, 2~4 = 반짝임, 달 둘레는 비움)  --scene-star-mask-N / --scene-star-tile-N
+       .scene__meteor      가끔 지나가는 별똥별            --scene-meteor-mask
+       .scene__moon  <canvas> 달 (js/moon.js 가 노이즈·하이라이트·링 빛 번짐까지 한 번 그림). <html data-moon=full|crescent> — <head> 스크립트가 열 때마다 50:50
+     .scene__day          낮 묶음
+       .scene__clouds <b>×9 구름 (작은 것 뒤·느리게, 큰 것 앞·빠르게, 가로로 순환)  --scene-cloud-N-*
+     .scene__far          먼 산                              --scene-far-mask
+     .scene__props--far   먼 소품(작은 나무) — 안개·가까운 산 뒤
+     .scene__haze         안개
+     .scene__near         가까운 산                          --scene-near-mask
+     .scene__props--near  가까운 소품(큰 나무)
+     .scene__ground       풀 + 흙 띠                         --scene-grass-mask, --scene-soil-mask
+     .scene__magpie       낮: 갓 쓴 까치 (js/magpie.js 가 만들어 여기 끼움 — 날다가 가끔 양옆 여백 풀밭에 앉음)
+     .scene__fx     <i>×16 낮: 꽃잎 / 밤: 반딧불(앞 8개만)
+   소품 <b><i></i></b> 은 3톤 레이어: ::before = a(줄기), ::after = b(꽃), <i> = c(밝은 꽃).
+   그림은 모두 색 없는 SVG 마스크이고, 색·모양은 theme.css 의 팩 변수에서 온다.
+   패럴랙스: data-depth 가 있는 레이어에 js/theme.js 가 --y(스크롤×depth, 정수 px)를 넣는다.
+   애니메이션은 transform·opacity 만 쓴다. 탭이 숨겨지면 theme.js 가 data-paused 를 붙여 멈춘다.
+   ============================================================ */
+
+.scene {
+  --ground-h: 64px;          /* 땅 띠 높이 (16 도트) */
+  --overscan: 120px;         /* 패럴랙스로 올라가도 아래가 비지 않게 더 그려 둘 높이 */
+  position: fixed; inset: 0; z-index: -1;
+  overflow: hidden; pointer-events: none;
+  background: linear-gradient(var(--sky-top), var(--sky-bottom));
+}
+.scene, .scene * { pointer-events: none; }
+.scene > * { position: absolute; left: 0; right: 0; }
+.scene[data-paused] *, .scene[data-paused] *::before, .scene[data-paused] *::after { animation-play-state: paused !important; }
+
+/* 패럴랙스 — 정수 px 로만 움직여 도트 가장자리가 번지지 않게 */
+.scene [data-depth] { transform: translate3d(0, calc(var(--y, 0) * -1px), 0); will-change: transform; }
+
+/* ---- 하늘 묶음: 낮(구름) ↔ 밤(별·별똥별·달) — 0.4초 4단계 페이드 ---- */
+.scene__day, .scene__night { top: 0; bottom: 0; }
+.scene__day   { opacity: 1; visibility: visible; transition: opacity .4s steps(4, end), visibility 0s 0s; }
+.scene__night { opacity: 0; visibility: hidden;  transition: opacity .4s steps(4, end), visibility 0s .4s; }
+:root[data-mode="night"] .scene__day   { opacity: 0; visibility: hidden;  transition: opacity .4s steps(4, end), visibility 0s .4s; }
+:root[data-mode="night"] .scene__night { opacity: 1; visibility: visible; transition: opacity .4s steps(4, end), visibility 0s 0s; }
+/* 안 보이는 묶음은 애니메이션도 쉰다 */
+:root[data-mode="night"] .scene__day *, :root:not([data-mode="night"]) .scene__night * { animation-play-state: paused; }
+
+/* ---- 달 자리 ----
+   콘텐츠(--shell-max, 좌우 안쪽 여백 --space-4) 바깥 오른쪽 여백의 가운데에 둔다.
+   카드 오른쪽 끝 = 테두리 4px + 그림자 8px 까지 → 빈 여백 = (100% - (셸 - 2×안쪽 여백))/2 - 12px
+   가운데의 오른쪽 거리 = 빈 여백/2, 거기서 크기 절반을 빼면 right. 화면 밖으로는 나가지 않게 0 이상.
+   여백이 112px 보다 좁은 화면(약 1580px 미만)은 56px 로 줄여(캔버스 1배) 여백 안에 들어가게 한다.
+   더 좁은 태블릿·모바일은 카드 뒤에 일부 가려질 수 있다. */
+.scene {
+  --orb: 112px;            /* 달 캔버스 56칸 × 2배 */
+  --orb-top: 100px;
+  --orb-gutter: calc((100% - var(--shell-max) + 2 * var(--space-4)) / 2 - 12px);
+  --orb-right: max(0px, calc(var(--orb-gutter) / 2 - var(--orb) / 2));
+}
+@media (max-width: 1579px) { .scene { --orb: 56px; } }          /* 56칸 × 1배 */
+@media (max-width: 720px)  { .scene { --orb: 56px; --orb-right: 16px; } }
+.scene__moon {
+  position: absolute; top: var(--orb-top); right: var(--orb-right);
+  right: round(var(--orb-right), 1px);   /* 정수 px — 캔버스 도트가 고르게 확대되도록 (지원 안 하면 위 줄) */
+  width: var(--orb); height: var(--orb);
+}
+
+/* 달: js/moon.js 가 56×56 칸 캔버스(달 지름 40칸 + 둘레 빛 번짐 링)에 한 번 그린다.
+   --orb 112px → 2배, 56px → 1배 — 격자 수는 그대로, 확대 배율만 정수로 바뀐다. */
+.scene__moon canvas {
+  position: absolute; inset: 0;
+  width: var(--orb); height: var(--orb);
+  image-rendering: pixelated;
+}
+
+/* ---- 별: 달 + 빛 번짐 둘레(달 칸 크기의 0.52배 반지름)는 비운다 ---- */
+.scene__stars {
+  position: absolute; left: 0; right: 0; top: 0; height: 56%;
+  --hole: calc(var(--orb) * .52);   /* 빛 번짐 바깥 반지름(28/56 = 0.5배) + 여유 */
+  -webkit-mask: radial-gradient(circle at calc(100% - var(--orb-right) - var(--orb) / 2) calc(var(--orb-top) + var(--orb) / 2),
+                transparent 0 var(--hole), currentColor calc(var(--hole) + 1px));
+          mask: radial-gradient(circle at calc(100% - var(--orb-right) - var(--orb) / 2) calc(var(--orb-top) + var(--orb) / 2),
+                transparent 0 var(--hole), currentColor calc(var(--hole) + 1px));
+}
+.scene__stars i {
+  position: absolute; inset: 0;
+  background: var(--scene-star);
+  -webkit-mask: var(--m) var(--p, 0 0) / var(--t) repeat;
+          mask: var(--m) var(--p, 0 0) / var(--t) repeat;
+}
+.scene__stars i:nth-child(1) { --m: var(--scene-star-mask-1); --t: var(--scene-star-tile-1); opacity: .85; }
+.scene__stars i:nth-child(2) { --m: var(--scene-star-mask-2); --t: var(--scene-star-tile-2); --p: 130px 40px;
+  animation: scene-twinkle 5.6s steps(1, end) -1.3s infinite; }
+.scene__stars i:nth-child(3) { --m: var(--scene-star-mask-3); --t: var(--scene-star-tile-3); --p: 260px 90px;
+  animation: scene-twinkle 7.2s steps(1, end) -4s infinite; }
+.scene__stars i:nth-child(4) { --m: var(--scene-star-mask-4); --t: var(--scene-star-tile-4); --p: 60px 150px;
+  animation: scene-twinkle 9.4s steps(1, end) -2.2s infinite; }
+@keyframes scene-twinkle {           /* 밝기 3단계로 한 칸씩 */
+  0%, 30%  { opacity: 1; }
+  45%      { opacity: .55; }
+  60%      { opacity: .25; }
+  75%      { opacity: .55; }
+  90%, 100% { opacity: 1; }
+}
+
+/* 별똥별: 31초에 한 번, 1초 남짓 대각선으로 지나간다 */
+.scene__meteor {
+  position: absolute; left: 18%; top: 8%; width: 96px; height: 48px;   /* 48×24 마스크 ×2 */
+  background: var(--scene-star);
+  -webkit-mask: var(--scene-meteor-mask) 0 0 / 100% 100% no-repeat;
+          mask: var(--scene-meteor-mask) 0 0 / 100% 100% no-repeat;
+  opacity: 0;
+  animation: scene-meteor 31s linear 6s infinite;
+}
+@keyframes scene-meteor {
+  0%, 91%     { transform: translate(0, 0); opacity: 0; }
+  91.4%       { opacity: 1; }
+  94.6%       { opacity: 1; }
+  95%, 100%   { transform: translate(384px, 192px); opacity: 0; }
+}
+
+/* ---- 구름: 오른쪽에서 왼쪽으로 흘러가고, 화면 밖으로 나가면 오른쪽에서 다시 ----
+   구름 띠 = 화면 위 8% ~ 먼 산 능선 바로 위(땅 + 산 마스크 288px + 여유 24px, 화면 높이 60% 를 넘지 않게).
+   원근: 위쪽일수록 크고 진하고 빠르게(7~9 큰 구름 40×12 ×4px), 가운데는 중간(4~6, 28×9 ×4px),
+   산 가까이 아래쪽은 작고 옅고 느리게(1~3, 18×6 ×3px).
+   9개 높이(--top)를 띠 안에 12% 간격으로 하나씩, 출발 위치(--f = 지나간 비율)는 이웃한 높이끼리 멀리 떨어뜨린다.
+   모바일에서 숨기는 2·3·6·9 를 빼도(남는 5개) 위~아래가 고르게 남도록 순서를 섞었다.
+   이동은 transform 만, steps 로 약 1px 씩 끊어 도트 가장자리가 번지지 않게 */
+.scene__clouds {
+  position: absolute; left: 0; right: 0; top: 8%;
+  bottom: max(40%, calc(var(--ground-h) + 288px + 24px));
+}
+.scene__clouds b {
+  --d: 4px; --cw: 28; --ch: 9; --cm: var(--scene-cloud-2-mask); --cs: var(--scene-cloud-2-shade-mask);
+  position: absolute; left: 0; top: var(--top, 10%);
+  width: calc(var(--cw) * var(--d)); height: calc(var(--ch) * var(--d));
+  opacity: var(--o, 1);
+  will-change: transform;
+  animation: scene-cloud var(--dur, 200s) steps(1600) calc(var(--f, 0) * var(--dur, 200s) * -1) infinite;
+}
+.scene__clouds b::before, .scene__clouds b::after { content: ""; position: absolute; inset: 0; }
+.scene__clouds b::before {
+  background: var(--scene-cloud);
+  -webkit-mask: var(--cm) 0 0 / 100% 100% no-repeat;
+          mask: var(--cm) 0 0 / 100% 100% no-repeat;
+}
+.scene__clouds b::after {
+  background: var(--scene-cloud-shade);
+  -webkit-mask: var(--cs) 0 0 / 100% 100% no-repeat;
+          mask: var(--cs) 0 0 / 100% 100% no-repeat;
+}
+.scene__clouds b:nth-child(-n+3) { --d: 3px; --cw: 18; --ch: 6; --cm: var(--scene-cloud-3-mask); --cs: var(--scene-cloud-3-shade-mask); }
+.scene__clouds b:nth-child(n+7)  { --cw: 40; --ch: 12; --cm: var(--scene-cloud-1-mask); --cs: var(--scene-cloud-1-shade-mask); }
+/* 위 → 아래: 7 · 9 · 8 (큰) → 4 · 6 · 5 (중간) → 2 · 1 · 3 (작은)
+   --o: 진하기(아래로 갈수록 옅게) · --f: 지금 화면을 지나간 비율 · --rest: 모션 줄이기 때 멈춰 있을 위치 */
+.scene__clouds b:nth-child(7) { --top: 0%;  --o: 1;   --dur: 150s; --f: .08; --rest: 12vw; }
+.scene__clouds b:nth-child(9) { --top: 12%; --o: 1;   --dur: 160s; --f: .58; --rest: 64vw; }
+.scene__clouds b:nth-child(8) { --top: 24%; --o: .95; --dur: 170s; --f: .33; --rest: 38vw; }
+.scene__clouds b:nth-child(4) { --top: 36%; --o: .88; --dur: 210s; --f: .83; --rest: 84vw; }
+.scene__clouds b:nth-child(6) { --top: 48%; --o: .82; --dur: 225s; --f: .18; --rest: 22vw; }
+.scene__clouds b:nth-child(5) { --top: 60%; --o: .76; --dur: 240s; --f: .66; --rest: 70vw; }
+.scene__clouds b:nth-child(2) { --top: 72%; --o: .62; --dur: 300s; --f: .44; --rest: 48vw; }
+.scene__clouds b:nth-child(1) { --top: 84%; --o: .55; --dur: 320s; --f: .94; --rest: 92vw; }
+.scene__clouds b:nth-child(3) { --top: 96%; --o: .48; --dur: 340s; --f: .25; --rest: 30vw; }
+@keyframes scene-cloud {
+  from { transform: translateX(100vw); }
+  to   { transform: translateX(-100%); }
+}
+
+/* ---- 낮: 갓 쓴 까치 — js/magpie.js 가 단계(phase)마다 좌표·동작을 정하고 data-fly 로 한 번씩 돌린다 ----
+   24×16 칸 스프라이트 8프레임 띠 SVG 를 도트 --d 배로. 땅(풀) 앞에 서야 해서 장면 맨 앞(꽃잎 바로 뒤)에 들어간다.
+   바깥 = 이동(--ax,--ay → --bx,--by, 약 2px steps) · -bob = 출렁임/깡총 높이 · -dir = 방향 반전
+   · -win = 한 프레임 창 · svg = 프레임 고르기(--fr) 또는 날갯짓 steps(4). 모두 transform 만.
+   data-act: fly(퍼덕이며 출렁) · rise(빠르게 퍼덕) · glide(활강) · stand · turn(뒤돌아봄) · peck(쪼기) · hop(깡총) */
+.scene__magpie {
+  --d: 4px; --bob: 2px;
+  position: absolute; left: 0; right: auto; top: 0;
+  width: calc(24 * var(--d)); height: calc(16 * var(--d));
+  visibility: hidden;
+}
+.scene__magpie span { position: absolute; inset: 0; display: block; }
+.scene__magpie[data-fly] {
+  visibility: visible; will-change: transform;
+  animation: scene-magpie-move var(--mdur, 10s) steps(var(--ms, 600), end) forwards;
+}
+.scene__magpie[data-dir="left"] .scene__magpie-dir { transform: scaleX(-1); }
+.scene__magpie-win { overflow: hidden; }
+/* 띠 = 8프레임 × (24칸 + 빈 칸 1) = 200칸 → 창(24칸)의 200/24 배. 프레임 하나 = 띠의 12.5%
+   0~3 날갯짓 · 4 활강 · 5 서기 · 6 쪼기 · 7 깡총 */
+.scene__magpie svg {
+  position: absolute; left: 0; top: 0; width: calc(800% * 25 / 24); height: 100%; display: block;
+  transform: translateX(calc(var(--fr, 0) * -12.5%));
+}
+.scene__magpie[data-act="glide"] { --fr: 4; }
+.scene__magpie[data-act="stand"], .scene__magpie[data-act="turn"] { --fr: 5; }
+.scene__magpie[data-fly][data-act="fly"] svg  { animation: scene-magpie-flap var(--flap, .48s) steps(4, end) infinite; }
+.scene__magpie[data-fly][data-act="fly"] .scene__magpie-bob { animation: scene-magpie-bob var(--bob-dur, 1.6s) steps(1, end) infinite; }
+.scene__magpie[data-fly][data-act="rise"] svg { animation: scene-magpie-flap var(--flap-rise, .24s) steps(4, end) infinite; }
+.scene__magpie[data-fly][data-act="peck"] svg { animation: scene-magpie-peck 1.3s steps(1, end) forwards; }
+.scene__magpie[data-fly][data-act="hop"] svg  { animation: scene-magpie-hop-frame .6s steps(1, end) forwards; }
+.scene__magpie[data-fly][data-act="hop"] .scene__magpie-bob { animation: scene-magpie-hop .6s steps(1, end) forwards; }
+.scene__magpie .k { fill: var(--magpie-ink); }
+.scene__magpie .h { fill: var(--magpie-hat); }
+.scene__magpie .s { fill: var(--magpie-strap); }
+.scene__magpie .b { fill: var(--magpie-gloss); }
+.scene__magpie .w { fill: var(--magpie-belly); }
+.scene__magpie .g { fill: var(--magpie-belly-shade); }
+/* 선비 까치: 로고와 같은 색(브랜드 변수). 날갯짓·출렁임이 느려 점잖게 난다 */
+.scene__magpie--seonbi { --flap: .84s; --flap-rise: .42s; --bob-dur: 2.6s; }
+.scene__magpie--seonbi .nk { fill: var(--kachi-ink); }
+.scene__magpie--seonbi .nt { fill: var(--kachi-ink); fill-opacity: .45; }   /* 흑립 반투명 챙 */
+.scene__magpie--seonbi .nw { fill: var(--kachi-cream); }
+.scene__magpie--seonbi .ny { fill: var(--hobak); }
+.scene__magpie--seonbi .nr { fill: var(--inju); }
+.scene__magpie--seonbi .ng { fill: var(--kachi-gray); }
+.scene__magpie--seonbi .ns { fill: var(--hanji); }
+.scene__magpie--seonbi .ne { fill: var(--hanji-edge); }
+@keyframes scene-magpie-move {
+  from { transform: translate(var(--ax, -120px), var(--ay, 30vh)); }
+  to   { transform: translate(var(--bx, 100vw), var(--by, 30vh)); }
+}
+@keyframes scene-magpie-flap {      /* 날갯짓 4프레임 = 띠의 절반을 한 프레임씩 */
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes scene-magpie-peck {      /* 서기 ↔ 쪼기 두 번 */
+  0%, 15%   { transform: translateX(-62.5%); }
+  15.1%, 38% { transform: translateX(-75%); }
+  38.1%, 55% { transform: translateX(-62.5%); }
+  55.1%, 78% { transform: translateX(-75%); }
+  78.1%, 100% { transform: translateX(-62.5%); }
+}
+@keyframes scene-magpie-hop-frame { /* 웅크림(서기) → 뜬 모습 → 내려앉음 */
+  0%    { transform: translateX(-62.5%); }
+  15%   { transform: translateX(-87.5%); }
+  75%, 100% { transform: translateX(-62.5%); }
+}
+@keyframes scene-magpie-hop {       /* 도트 단위 포물선 */
+  0%   { transform: translateY(0); }
+  15%  { transform: translateY(calc(var(--d) * -2)); }
+  30%, 45% { transform: translateY(calc(var(--d) * -4)); }
+  60%  { transform: translateY(calc(var(--d) * -2)); }
+  75%, 100% { transform: translateY(0); }
+}
+@keyframes scene-magpie-bob {       /* 사인 16등분, 정수 px */
+  0%    { transform: translateY(0); }
+  6.25% { transform: translateY(calc(var(--bob) * -1)); }
+  12.5% { transform: translateY(calc(var(--bob) * -2)); }
+  18.75%, 31.25% { transform: translateY(calc(var(--bob) * -3)); }
+  37.5% { transform: translateY(calc(var(--bob) * -2)); }
+  43.75% { transform: translateY(calc(var(--bob) * -1)); }
+  50%   { transform: translateY(0); }
+  56.25% { transform: translateY(var(--bob)); }
+  62.5% { transform: translateY(calc(var(--bob) * 2)); }
+  68.75%, 81.25% { transform: translateY(calc(var(--bob) * 3)); }
+  87.5% { transform: translateY(calc(var(--bob) * 2)); }
+  93.75%, 100% { transform: translateY(var(--bob)); }
+}
+/* 밤에는 아예 안 보인다 (날던·앉아 있던 중이면 즉시 사라짐 — JS 도 단계를 취소) */
+:root[data-mode="night"] .scene__magpie { display: none; }
+
+/* ---- 산: 위쪽은 계단 능선 마스크, 그 아래는 꽉 채운 면 ---- */
+.scene__far, .scene__near {
+  bottom: calc(-1 * var(--overscan));
+  -webkit-mask-repeat: repeat-x, no-repeat;
+          mask-repeat: repeat-x, no-repeat;
+  -webkit-mask-position: left top, left bottom;
+          mask-position: left top, left bottom;
+}
+.scene__far {
+  height: calc(192px + 96px + var(--ground-h) + var(--overscan));
+  background: var(--scene-far);
+  -webkit-mask-image: var(--scene-far-mask), linear-gradient(currentColor, currentColor);
+          mask-image: var(--scene-far-mask), linear-gradient(currentColor, currentColor);
+  -webkit-mask-size: 640px 192px, 100% calc(100% - 191px);
+          mask-size: 640px 192px, 100% calc(100% - 191px);
+}
+.scene__haze {
+  bottom: 0; height: calc(220px + var(--ground-h));
+  background: linear-gradient(transparent, var(--sky-top) 55%, transparent);
+  opacity: .55;
+}
+.scene__near {
+  height: calc(128px + 24px + var(--ground-h) + var(--overscan));
+  background: var(--scene-near);
+  -webkit-mask-image: var(--scene-near-mask), linear-gradient(currentColor, currentColor);
+          mask-image: var(--scene-near-mask), linear-gradient(currentColor, currentColor);
+  -webkit-mask-size: 640px 128px, 100% calc(100% - 127px);
+          mask-size: 640px 128px, 100% calc(100% - 127px);
+}
+
+/* ---- 소품(나무): 40×48 도트 그림을 --s(도트 크기) 배로 ---- */
+.scene__props { top: 0; bottom: 0; }
+.scene__props b {
+  position: absolute; display: block;
+  width: calc(40 * var(--s, 4px)); height: calc(48 * var(--s, 4px));
+}
+.scene__props b::before, .scene__props b::after, .scene__props b i { content: ""; position: absolute; inset: 0; }
+.scene__props b::before {
+  background: var(--scene-prop-a);
+  -webkit-mask: var(--scene-prop-a-mask) 0 0 / 100% 100% no-repeat;
+          mask: var(--scene-prop-a-mask) 0 0 / 100% 100% no-repeat;
+}
+.scene__props b::after {
+  background: var(--scene-prop-b);
+  -webkit-mask: var(--scene-prop-b-mask) 0 0 / 100% 100% no-repeat;
+          mask: var(--scene-prop-b-mask) 0 0 / 100% 100% no-repeat;
+}
+.scene__props b i {
+  z-index: 1;
+  background: var(--scene-prop-c);
+  -webkit-mask: var(--scene-prop-c-mask) 0 0 / 100% 100% no-repeat;
+          mask: var(--scene-prop-c-mask) 0 0 / 100% 100% no-repeat;
+}
+/* 먼 나무: 작게, 밑동은 가까운 산 뒤로 숨는다 (안개가 덮어 옅게 보임) */
+.scene__props--far b { --s: 3px; bottom: calc(var(--ground-h) + 30px); opacity: .8; }
+.scene__props--far b:nth-child(1) { left: 27%; }
+.scene__props--far b:nth-child(2) { left: 63%; }
+/* 가까운 나무: 크게, 밑동은 땅 띠 아래로 묻는다 */
+.scene__props--near b { bottom: calc(var(--ground-h) - 48px); }
+.scene__props--near b:nth-child(1) { --s: 5px; left: -24px; }
+.scene__props--near b:nth-child(2) { --s: 4px; right: 5%; }
+
+/* ---- 땅: 풀 띠(타일 16×8 → ×4) + 흙(알갱이 타일) ---- */
+.scene__ground {
+  bottom: 0; height: var(--ground-h);
+  background: linear-gradient(transparent 20px, var(--scene-soil) 20px);
+  image-rendering: pixelated;
+}
+.scene__ground::before, .scene__ground::after { content: ""; position: absolute; left: 0; right: 0; }
+.scene__ground::before {
+  top: 0; height: 32px;
+  background: linear-gradient(var(--scene-grass) 28px, var(--scene-grass-dark) 28px);
+  -webkit-mask: var(--scene-grass-mask) repeat-x left top / 64px 32px;
+          mask: var(--scene-grass-mask) repeat-x left top / 64px 32px;
+}
+.scene__ground::after {
+  top: 32px; bottom: 0;
+  background: var(--scene-soil-dot);
+  -webkit-mask: var(--scene-soil-mask) repeat left top / 64px 64px;
+          mask: var(--scene-soil-mask) repeat left top / 64px 64px;
+}
+
+/* ---- 낮: 꽃잎 ----
+   뒤쪽(9~12)  : 2px 도트, 느리고 옅게
+   가운데(1~8) : 3px 도트
+   앞쪽(13~14) : 4px 도트, 빠르고 크게 흔들림
+   나무(15~16) : 가까운 나무 꽃 덩어리에서 떨어져 옆으로 흩날림 */
+.scene__fx { inset: 0; }
+.scene__fx i {
+  --size: 15px;
+  position: absolute; top: -24px; width: var(--size); height: var(--size);   /* 꽃잎 5×5 도트 */
+  background: var(--scene-fx);
+  -webkit-mask: var(--scene-fx-mask) no-repeat center / 100% 100%;
+          mask: var(--scene-fx-mask) no-repeat center / 100% 100%;
+  will-change: transform;
+  animation: scene-petal var(--dur, 18s) linear var(--delay, 0s) infinite;
+}
+.scene__fx i:nth-child(even) { background: var(--scene-fx-2); }
+.scene__fx i:nth-child(1)  { left: 6%;  --dur: 19s; --delay: -2s;  --sway: 36px; }
+.scene__fx i:nth-child(2)  { left: 21%; --dur: 23s; --delay: -11s; --sway: 28px; }
+.scene__fx i:nth-child(3)  { left: 44%; --dur: 21s; --delay: -6s;  --sway: 44px; }
+.scene__fx i:nth-child(4)  { left: 58%; --dur: 25s; --delay: -16s; --sway: 32px; }
+.scene__fx i:nth-child(5)  { left: 79%; --dur: 20s; --delay: -9s;  --sway: 40px; }
+.scene__fx i:nth-child(6)  { left: 92%; --dur: 24s; --delay: -19s; --sway: 30px; }
+.scene__fx i:nth-child(7)  { left: 34%; --dur: 22s; --delay: -14s; --sway: 48px; }
+.scene__fx i:nth-child(8)  { left: 69%; --dur: 18s; --delay: -4s;  --sway: 26px; }
+.scene__fx i:nth-child(n+9):nth-child(-n+12) { --size: 10px; opacity: .55; }
+.scene__fx i:nth-child(9)  { left: 14%; --dur: 31s; --delay: -7s;  --sway: 18px; }
+.scene__fx i:nth-child(10) { left: 51%; --dur: 34s; --delay: -22s; --sway: 14px; }
+.scene__fx i:nth-child(11) { left: 74%; --dur: 29s; --delay: -13s; --sway: 20px; }
+.scene__fx i:nth-child(12) { left: 88%; --dur: 33s; --delay: -27s; --sway: 16px; }
+.scene__fx i:nth-child(13), .scene__fx i:nth-child(14) { --size: 20px; }
+.scene__fx i:nth-child(13) { left: 38%; --dur: 12s; --delay: -5s;  --sway: 72px; }
+.scene__fx i:nth-child(14) { left: 84%; --dur: 14s; --delay: -10s; --sway: 64px; }
+.scene__fx i:nth-child(15), .scene__fx i:nth-child(16) {
+  top: auto; animation-name: scene-petal-drift; animation-timing-function: linear;
+}
+.scene__fx i:nth-child(15) { left: 96px; bottom: calc(var(--ground-h) + 136px); --dur: 9s;  --delay: -3s; --dx: 260px; }
+.scene__fx i:nth-child(16) { left: calc(95% - 104px); bottom: calc(var(--ground-h) + 104px); --size: 10px; --dur: 11s; --delay: -7s; --dx: -300px; }
+
+@keyframes scene-petal {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(calc(var(--sway, 32px) * -1), 27vh); }
+  50%  { transform: translate(calc(var(--sway, 32px) * .4), 54vh); }
+  75%  { transform: translate(calc(var(--sway, 32px) * -1.3), 81vh); }
+  100% { transform: translate(calc(var(--sway, 32px) * -.5), calc(100vh + 48px)); }
+}
+@keyframes scene-petal-drift {      /* 나무에서 떨어져 옆으로 날리다 땅 위에서 사라짐 */
+  0%   { transform: translate(0, 0); opacity: 0; }
+  10%  { opacity: 1; }
+  40%  { transform: translate(calc(var(--dx) * .35), 36px); }
+  70%  { transform: translate(calc(var(--dx) * .7), 64px); }
+  88%  { opacity: 1; }
+  100% { transform: translate(var(--dx), 112px); opacity: 0; }
+}
+
+/* ---- 밤: 앞 8개만 반딧불 — 땅 근처에서만 (별과 겹치지 않게) ---- */
+:root[data-mode="night"] .scene__fx i:nth-child(n+9) { display: none; }
+:root[data-mode="night"] .scene__fx i {
+  top: auto; bottom: calc(var(--ground-h) + 24px + var(--rise, 0px));
+  width: 8px; height: 8px;
+  background: var(--scene-fx);
+  -webkit-mask: none; mask: none;
+  box-shadow: 0 0 10px 3px var(--scene-fx);
+  animation: scene-firefly var(--dur, 18s) ease-in-out var(--delay, 0s) infinite,
+             scene-blink 3.2s steps(4, end) var(--delay, 0s) infinite;
+}
+:root[data-mode="night"] .scene__fx i:nth-child(even) { --rise: 48px; background: var(--scene-fx-2); }
+:root[data-mode="night"] .scene__fx i:nth-child(3n) { --rise: 96px; }
+@keyframes scene-firefly {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(28px, -24px); }
+  50% { transform: translate(-12px, -48px); }
+  75% { transform: translate(-32px, -16px); }
+}
+@keyframes scene-blink {
+  0%, 100% { opacity: .25; }
+  50% { opacity: 1; }
+}
+
+/* ---- 화면 폭별 개수: 데스크톱 16 · 태블릿 11 · 모바일 6 ---- */
+@media (max-width: 1139px) {
+  .scene__fx i:nth-child(7), .scene__fx i:nth-child(8), .scene__fx i:nth-child(11),
+  .scene__fx i:nth-child(12), .scene__fx i:nth-child(14) { display: none; }
+}
+@media (max-width: 720px) {
+  .scene { --ground-h: 48px; }
+  .scene__fx i:nth-child(4), .scene__fx i:nth-child(5), .scene__fx i:nth-child(6),
+  .scene__fx i:nth-child(10), .scene__fx i:nth-child(16) { display: none; }
+  .scene__fx i:nth-child(15) { left: 64px; bottom: calc(var(--ground-h) + 96px); --dx: 200px; }
+  /* 구름 5개(작은 1·중간 2·큰 2) · 나무: 먼 1 · 가까운 1 */
+  .scene__clouds b:nth-child(2), .scene__clouds b:nth-child(3), .scene__clouds b:nth-child(6), .scene__clouds b:nth-child(9) { display: none; }
+  .scene__props--far b:nth-child(2), .scene__props--near b:nth-child(2) { display: none; }
+  .scene__props--far b:nth-child(1) { left: 52%; }
+  .scene__props--near b:nth-child(1) { --s: 4px; }
+  .scene__magpie { --d: 2px; --bob: 1px; }
+}
+
+/* ---- 모션 줄이기: 꽃잎·반딧불·별똥별 숨김, 구름 이동·별 반짝임·패럴랙스 정지 (구름·달·별·나무는 그대로 보임) ---- */
+@media (prefers-reduced-motion: reduce) {
+  .scene__fx, .scene__meteor, .scene__magpie { display: none; }
+  .scene__clouds b { transform: translateX(var(--rest, 0)); }   /* 구름은 제자리에 멈춘 채 보임 */
+  .scene *, .scene *::before, .scene *::after { animation: none !important; }
+  .scene [data-depth] { transform: none; }
+}

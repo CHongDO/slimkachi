@@ -1,0 +1,251 @@
+/* ============================================================
+   theme.css — 테마 토큰 (색/폰트/간격/모양)
+   ------------------------------------------------------------
+   ▶ 색은 이 파일에만 씁니다. shell.css, page.css, scene.css,
+     각 앱 CSS(css/apps/*)는 아래 변수만 참조합니다.
+
+   구조: <html data-theme="팩이름" data-mode="day|night">
+     1) 공통 토큰   — 폰트, 글자 크기, 간격, 픽셀 단위(모든 팩이 같이 씀)
+     2) 테마 팩     — [data-theme="..."] 낮 값 + [data-mode="night"] 밤 값
+                      + 배경 리소스(--scene-*-mask, assets/themes/<팩>/)
+   ▶ 새 팩(예: neon)은 2)의 변수 세트 두 벌과 assets/themes/neon/ 만 추가하면
+     됩니다. 컴포넌트 CSS 는 손대지 않습니다.
+   ▶ 모드는 index.html·pages/*.html <head> 의 짧은 스크립트가 그리기 전에 정합니다
+     (저장한 값 → 없으면 prefers-color-scheme). 헤더 토글은 js/theme.js.
+   ============================================================ */
+
+/* ---- 도트 폰트: 갈무리 (Galmuri, SIL OFL 1.1) — jsdelivr, 버전 고정 ----
+   설계 크기의 정수배로만 쓴다 (Galmuri14 = 15px, Galmuri11 Bold = 12px / 24px).
+   일반 굵기 Galmuri11 은 쓰지 않아 내려받지 않는다(용량 절약). */
+@font-face {
+  font-family: "Galmuri14";
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/Galmuri14.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Galmuri11";
+  font-weight: 700;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/Galmuri11-Bold.woff2") format("woff2");
+}
+
+/* ============================================================
+   1) 공통 토큰
+   ============================================================ */
+:root {
+  /* ---- 타이포그래피 ---- */
+  --font-ui: "Galmuri14", "맑은 고딕", "Malgun Gothic", system-ui, sans-serif;   /* 본문·버튼·입력 */
+  --font-bold: "Galmuri11", "Galmuri14", "맑은 고딕", "Malgun Gothic", system-ui, sans-serif; /* 제목·라벨 (700) */
+  --font-size: 15px;        /* Galmuri14 ×1 */
+  --font-size-sm: 15px;     /* 도트 폰트는 크기를 줄이면 번지므로 본문과 같게 */
+  --font-size-xs: 12px;     /* Galmuri11 Bold ×1 — 짧은 라벨·배지 전용(--font-bold 와 함께) */
+  --font-size-h: 24px;      /* Galmuri11 Bold ×2 — 큰 제목 */
+  --line-height: 1.8;       /* 15px → 27px */
+
+  /* ---- 픽셀 단위 ---- */
+  --px: 4px;                                  /* 한 픽셀(도트) 크기 */
+  --shell-max: 1340px;                        /* 콘텐츠 영역 최대 폭 (셸·배경 해/달 위치가 같이 씀) */
+  --line: 2px;                                /* 컨트롤 테두리 두께 (½ 픽셀) */
+  --radius: 0;                                /* 둥근 모서리 없음 */
+  --radius-sm: 0;
+
+  /* ---- 간격 (4px 격자) ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 40px;
+
+  /* ---- 흐림 없는 오프셋 그림자 (계단 2단) ---- */
+  --shadow-pixel: var(--px) calc(var(--px) * 2) 0 0 var(--shadow), calc(var(--px) * 2) var(--px) 0 0 var(--shadow);
+
+  /* ---- 사진 처리 기본값 (화면 색 아님 — 테마와 무관하게 고정) ---- */
+  --jpg-fill-default: #ffffff;                /* 투명 사진을 JPG 로 바꿀 때 채우는 기본 배경색 */
+
+  /* ---- 브랜드 SlimKachi (로고·파비콘·선비 까치가 같이 씀, 낮·밤 공통) ---- */
+  --inju: #C8402F;             /* 인주 — 낙관 도장색, SLIM 배지 */
+  --inju-night: #D9533F;       /* 밤의 인주 (어두운 바탕에서 조금 밝게) */
+  --hanji: #F3E3C3;            /* 한지 — 두루마리·파비콘 바탕 */
+  --hobak: #D9A441;            /* 호박 구슬 — 갓끈 */
+  --kachi-ink: #1E1A24;        /* 까치 머리·등·꼬리·흑립 */
+  --kachi-cream: #F7F3EC;      /* 흰 배·눈, SLIM 배지 글자 */
+  --kachi-gray: #6B6475;       /* 부리·다리 */
+  --hanji-edge: #C9AE7E;       /* 두루마리 말린 끝 */
+}
+
+/* ============================================================
+   2) 테마 팩: landscape — 벚꽃 마을 풍경 (낮)
+   ============================================================ */
+:root,
+:root[data-theme="landscape"] {
+  /* ---- 배경 장면 ---- */
+  --sky-top: #F6E7DC;
+  --sky-bottom: #EBC9C5;
+  --scene-far: #DDB8BC;        /* 먼 산 */
+  --scene-near: #CFA2AE;       /* 가까운 산 */
+  --scene-grass: #6CC24A;
+  --scene-grass-dark: #4E9A34;
+  --scene-soil: #3A2A2A;       /* 땅 */
+  --scene-soil-dot: #4D3836;
+  --scene-fx: #F28DB2;         /* 낮: 벚꽃잎 */
+  --scene-fx-2: #F9C3D6;
+  --scene-far-mask: url("../assets/themes/landscape/far.svg");
+  --scene-near-mask: url("../assets/themes/landscape/near.svg");
+  --scene-grass-mask: url("../assets/themes/landscape/grass.svg");
+  --scene-soil-mask: url("../assets/themes/landscape/soil.svg");
+  --scene-fx-mask: url("../assets/themes/landscape/petal.svg");
+  /* 소품(벚꽃나무) 3톤: a = 줄기·가지, b = 꽃, c = 밝은 꽃 — 40×48 도트 마스크 */
+  --scene-prop-a: #6B4A4A;
+  --scene-prop-b: #F2A7C3;
+  --scene-prop-c: #FBD3E0;
+  --scene-star: #FFF1D6;       /* 별·별똥별 (밤에만 보임) */
+  /* 별 타일 4장(1 = 고정, 2~4 = 반짝임) · 별똥별 — 인라인 SVG 마스크, 타일 크기 = SVG 크기 */
+  --scene-prop-a-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 48' shape-rendering='crispEdges'%3E%3Cpath d='M19 14h2v1h-2zM19 15h2v1h-2zM26 15h1v1h-1zM19 16h2v1h-2zM25 16h1v1h-1zM13 17h1v1h-1zM19 17h2v1h-2zM25 17h1v1h-1zM14 18h1v1h-1zM19 18h2v1h-2zM24 18h1v1h-1zM14 19h1v1h-1zM19 19h2v1h-2zM24 19h1v1h-1zM31 19h2v1h-2zM14 20h1v1h-1zM19 20h2v1h-2zM23 20h1v1h-1zM30 20h2v1h-2zM8 21h2v1h-2zM15 21h1v1h-1zM19 21h2v1h-2zM23 21h1v1h-1zM29 21h2v1h-2zM9 22h2v1h-2zM16 22h1v1h-1zM19 22h2v1h-2zM22 22h1v1h-1zM28 22h2v1h-2zM10 23h2v1h-2zM16 23h1v1h-1zM19 23h2v1h-2zM22 23h1v1h-1zM27 23h2v1h-2zM11 24h2v1h-2zM16 24h1v1h-1zM19 24h3v1h-3zM26 24h2v1h-2zM12 25h2v1h-2zM17 25h1v1h-1zM19 25h3v1h-3zM26 25h2v1h-2zM13 26h2v1h-2zM18 26h3v1h-3zM25 26h2v1h-2zM13 27h2v1h-2zM18 27h3v1h-3zM24 27h2v1h-2zM14 28h2v1h-2zM18 28h4v1h-4zM23 28h2v1h-2zM15 29h2v1h-2zM18 29h6v1h-6zM16 30h7v1h-7zM17 31h5v1h-5zM18 32h4v1h-4zM18 33h4v1h-4zM18 34h4v1h-4zM18 35h4v1h-4zM18 36h4v1h-4zM18 37h4v1h-4zM18 38h4v1h-4zM18 39h4v1h-4zM18 40h4v1h-4zM18 41h4v1h-4zM18 42h4v1h-4zM18 43h4v1h-4zM17 44h6v1h-6zM17 45h6v1h-6zM17 46h6v1h-6zM17 47h6v1h-6z'/%3E%3C/svg%3E");
+  --scene-prop-b-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 48' shape-rendering='crispEdges'%3E%3Cpath d='M14 2h12v1h-12zM14 3h12v1h-12zM12 4h16v1h-16zM12 5h16v1h-16zM10 6h20v1h-20zM10 7h20v1h-20zM10 8h24v1h-24zM10 9h24v1h-24zM4 10h32v1h-32zM4 11h32v1h-32zM4 12h34v1h-34zM4 13h34v1h-34zM2 14h36v1h-36zM2 15h36v1h-36zM2 16h36v1h-36zM2 17h36v1h-36zM2 18h36v1h-36zM2 19h36v1h-36zM2 20h36v1h-36zM2 21h36v1h-36zM2 22h36v1h-36zM2 23h36v1h-36zM2 24h12v1h-12zM16 24h6v1h-6zM24 24h2v1h-2zM28 24h4v1h-4zM34 24h4v1h-4zM2 25h12v1h-12zM16 25h6v1h-6zM24 25h2v1h-2zM28 25h4v1h-4zM34 25h4v1h-4zM4 26h4v1h-4zM12 26h2v1h-2zM22 26h14v1h-14zM4 27h4v1h-4zM12 27h2v1h-2zM22 27h14v1h-14zM12 28h2v1h-2zM16 28h2v1h-2zM22 28h8v1h-8zM12 29h2v1h-2zM16 29h2v1h-2zM22 29h8v1h-8z'/%3E%3C/svg%3E");
+  --scene-prop-c-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 48' shape-rendering='crispEdges'%3E%3Cpath d='M14 4h6v1h-6zM14 5h6v1h-6zM12 6h8v1h-8zM12 7h8v1h-8zM14 8h6v1h-6zM14 9h6v1h-6zM16 10h2v1h-2zM26 10h4v1h-4zM16 11h2v1h-2zM26 11h4v1h-4zM4 12h6v1h-6zM24 12h6v1h-6zM4 13h6v1h-6zM24 13h6v1h-6zM4 14h6v1h-6zM24 14h6v1h-6zM4 15h6v1h-6zM24 15h6v1h-6zM6 16h2v1h-2zM6 17h2v1h-2zM10 20h4v1h-4zM22 20h4v1h-4zM10 21h4v1h-4zM22 21h4v1h-4zM12 22h2v1h-2zM22 22h4v1h-4zM12 23h2v1h-2zM22 23h4v1h-4z'/%3E%3C/svg%3E");
+  --scene-star-mask-1: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1100 560' shape-rendering='crispEdges'%3E%3Cpath d='M33 24h1v1h-1zM33 25h1v1h-1zM31 26h5v1h-5zM33 27h1v1h-1zM33 28h1v1h-1zM269 38h2v1h-2zM269 39h2v1h-2zM646 45h2v1h-2zM646 46h2v1h-2zM868 59h2v1h-2zM528 60h4v1h-4zM868 60h2v1h-2zM528 61h4v1h-4zM528 62h4v1h-4zM528 63h4v1h-4zM975 93h2v1h-2zM975 94h2v1h-2zM401 109h1v1h-1zM401 110h1v1h-1zM399 111h5v1h-5zM401 112h1v1h-1zM401 113h1v1h-1zM177 153h2v1h-2zM177 154h2v1h-2zM663 178h2v1h-2zM663 179h2v1h-2zM506 193h2v1h-2zM506 194h2v1h-2zM825 218h4v1h-4zM825 219h4v1h-4zM825 220h4v1h-4zM825 221h4v1h-4zM1066 223h2v1h-2zM1066 224h2v1h-2zM446 244h1v1h-1zM446 245h1v1h-1zM444 246h5v1h-5zM446 247h1v1h-1zM446 248h1v1h-1zM115 307h2v1h-2zM115 308h2v1h-2zM1054 325h4v1h-4zM1054 326h4v1h-4zM1054 327h4v1h-4zM1054 328h4v1h-4zM493 336h2v1h-2zM493 337h2v1h-2zM768 344h1v1h-1zM768 345h1v1h-1zM766 346h5v1h-5zM768 347h1v1h-1zM768 348h1v1h-1zM924 382h2v1h-2zM924 383h2v1h-2zM204 392h2v1h-2zM204 393h2v1h-2zM675 434h4v1h-4zM675 435h4v1h-4zM675 436h4v1h-4zM675 437h4v1h-4zM179 455h2v1h-2zM179 456h2v1h-2zM349 456h2v1h-2zM349 457h2v1h-2zM18 495h4v1h-4zM18 496h4v1h-4zM18 497h4v1h-4zM18 498h4v1h-4zM966 503h2v1h-2zM966 504h2v1h-2zM923 516h2v1h-2zM923 517h2v1h-2zM491 544h2v1h-2zM491 545h2v1h-2z'/%3E%3C/svg%3E");
+  --scene-star-tile-1: 1100px 560px;
+  --scene-star-mask-2: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 830 520' shape-rendering='crispEdges'%3E%3Cpath d='M131 24h1v1h-1zM131 25h1v1h-1zM129 26h5v1h-5zM131 27h1v1h-1zM131 28h1v1h-1zM571 32h2v1h-2zM571 33h2v1h-2zM414 327h4v1h-4zM414 328h4v1h-4zM414 329h4v1h-4zM414 330h4v1h-4zM182 359h2v1h-2zM182 360h2v1h-2z'/%3E%3C/svg%3E");
+  --scene-star-tile-2: 830px 520px;
+  --scene-star-mask-3: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 970 540' shape-rendering='crispEdges'%3E%3Cpath d='M95 49h4v1h-4zM95 50h4v1h-4zM95 51h4v1h-4zM95 52h4v1h-4zM400 145h1v1h-1zM400 146h1v1h-1zM398 147h5v1h-5zM400 148h1v1h-1zM400 149h1v1h-1zM911 159h2v1h-2zM911 160h2v1h-2zM547 293h2v1h-2zM547 294h2v1h-2z'/%3E%3C/svg%3E");
+  --scene-star-tile-3: 970px 540px;
+  --scene-star-mask-4: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 690 500' shape-rendering='crispEdges'%3E%3Cpath d='M594 39h2v1h-2zM594 40h2v1h-2zM77 445h1v1h-1zM77 446h1v1h-1zM75 447h5v1h-5zM77 448h1v1h-1zM77 449h1v1h-1z'/%3E%3C/svg%3E");
+  --scene-star-tile-4: 690px 500px;
+  --scene-meteor-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 24' shape-rendering='crispEdges'%3E%3Crect x='0' y='0' width='4' height='2' fill-opacity='0.15'/%3E%3Crect x='4' y='2' width='4' height='2' fill-opacity='0.23'/%3E%3Crect x='8' y='4' width='4' height='2' fill-opacity='0.3'/%3E%3Crect x='12' y='6' width='4' height='2' fill-opacity='0.38'/%3E%3Crect x='16' y='8' width='4' height='2' fill-opacity='0.46'/%3E%3Crect x='20' y='10' width='4' height='2' fill-opacity='0.54'/%3E%3Crect x='24' y='12' width='4' height='2' fill-opacity='0.61'/%3E%3Crect x='28' y='14' width='4' height='2' fill-opacity='0.69'/%3E%3Crect x='32' y='16' width='4' height='2' fill-opacity='0.77'/%3E%3Crect x='36' y='18' width='4' height='2' fill-opacity='0.85'/%3E%3Crect x='40' y='20' width='4' height='2' fill-opacity='0.92'/%3E%3Crect x='44' y='22' width='4' height='2' fill-opacity='1.0'/%3E%3Crect x='44' y='22' width='4' height='2'/%3E%3C/svg%3E");
+  /* 구름(낮) — 40×12 · 28×9 · 18×6 도트 마스크 */
+  --scene-cloud: #FDF5F0;
+  --scene-cloud-shade: #EBCACB;
+  /* 갓 쓴 까치(낮, js/magpie.js) */
+  --magpie-ink: #1C1924;         /* 머리·등·꼬리 */
+  --magpie-hat: #3B3044;         /* 갓 (말총 느낌으로 머리보다 한 톤 밝게) */
+  --magpie-strap: #D59A5E;       /* 갓끈 */
+  --magpie-gloss: #3D62B3;       /* 날개 푸른 광택 */
+  --magpie-belly: #FFFDF8;       /* 흰 배·눈 */
+  --magpie-belly-shade: #DCCBD3; /* 배 아래 그늘 */
+  /* 달 (js/moon.js 가 캔버스 56×56 칸에 노이즈로 그림) — 맑은 베이지·크림 7톤, 어두운 것 → 밝은 것 */
+  --moon-mare-deep: #BBAB8E;   /* 짙은 바다 (대비 낮게) */
+  --moon-mare: #CCBE9F;        /* 바다 */
+  --moon-rim: #D4C7AA;         /* 가장자리 */
+  --moon-mid: #E2D6BC;         /* 중간 */
+  --moon-base: #EEE5D0;        /* 기본 */
+  --moon-highland: #F8F1E2;    /* 밝은 고원 */
+  --moon-shine: #FFFBF2;       /* 왼쪽 위 하이라이트 */
+  --moon-rimlight: #FFF8EC;    /* 가장자리 한 줄 테두리 빛 */
+  --moon-glow: #F1E8F4;        /* 달빛 번짐 링 (연한 크림·라벤더) */
+  --scene-cloud-1-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 12' shape-rendering='crispEdges'%3E%3Cpath d='M19 0h8v1h-8zM12 1h16v1h-16zM11 2h17v1h-17zM29 2h4v1h-4zM10 3h25v1h-25zM5 4h30v1h-30zM4 5h32v1h-32zM4 6h34v1h-34zM4 7h35v1h-35zM4 8h35v1h-35zM4 9h35v1h-35zM4 10h35v1h-35zM5 11h33v1h-33z'/%3E%3C/svg%3E");
+  --scene-cloud-1-shade-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 12' shape-rendering='crispEdges'%3E%3Cpath d='M37 6h1v1h-1zM38 7h1v1h-1zM38 8h1v1h-1zM38 9h1v1h-1zM4 10h35v1h-35zM5 11h33v1h-33z'/%3E%3C/svg%3E");
+  --scene-cloud-2-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 9' shape-rendering='crispEdges'%3E%3Cpath d='M9 0h6v1h-6zM8 1h8v1h-8zM17 1h4v1h-4zM8 2h14v1h-14zM4 3h19v1h-19zM3 4h23v1h-23zM3 5h24v1h-24zM3 6h24v1h-24zM3 7h24v1h-24zM4 8h23v1h-23z'/%3E%3C/svg%3E");
+  --scene-cloud-2-shade-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 9' shape-rendering='crispEdges'%3E%3Cpath d='M26 5h1v1h-1zM26 6h1v1h-1zM3 7h24v1h-24zM4 8h23v1h-23z'/%3E%3C/svg%3E");
+  --scene-cloud-3-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 6' shape-rendering='crispEdges'%3E%3Cpath d='M7 0h4v1h-4zM6 1h6v1h-6zM13 1h2v1h-2zM2 2h14v1h-14zM2 3h15v1h-15zM2 4h15v1h-15zM2 5h14v1h-14z'/%3E%3C/svg%3E");
+  --scene-cloud-3-shade-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 6' shape-rendering='crispEdges'%3E%3Cpath d='M16 3h1v1h-1zM2 4h15v1h-15zM2 5h14v1h-14z'/%3E%3C/svg%3E");
+
+  /* ---- 면(배경) ---- */
+  --app-bg: #EBC9C5;            /* 장면 뒤 기본 바탕 (스크롤 끝 여백) */
+  --surface-1: #FFF8F1;         /* 카드/패널 */
+  --surface-2: #F8EADF;         /* 보조 면 (통계 박스, 안내) */
+  --surface-3: #EBD5CC;         /* 더 진한 보조 면 (빈 게이지 칸, 체크무늬) */
+  --header-bg: #FFF8F1;
+  --footer-bg: #FFF8F1;
+
+  /* ---- 경계선 / 그림자 ---- */
+  --frame: #6B4A63;             /* 카드·컨트롤 외곽 픽셀선 */
+  --border: #E6CFC6;            /* 옅은 구분선 */
+  --border-strong: #B98C9C;     /* 업로드 점선 */
+  --shadow: #C79AA8;            /* 딱딱한 그림자 */
+  --backdrop: rgba(46, 34, 48, .55);   /* 팝업 뒤를 덮는 막 */
+  --brand-badge: var(--inju);          /* SLIM 배지 바탕 */
+  --kachi-outline: transparent;        /* 로고 까치 외곽선 (밤에만) */
+
+  /* ---- 텍스트 ---- */
+  --text: #2E2230;
+  --text-secondary: #574257;
+  --text-muted: #6E5869;
+  --text-link: #A8325E;
+
+  /* ---- 강조색 ---- */
+  --accent: #F28DB2;            /* 벚꽃 — 주 버튼 바탕 */
+  --accent-text: #2E2230;       /* 강조 바탕 위 글자 */
+  --text-accent: #A8325E;       /* 카드 위 강조 글자 */
+  --accent-soft: #FCE4EC;       /* 드래그 중 업로드 영역, 선택된 항목 */
+  --accent-2: #6CC24A;          /* 풀 — 진행 게이지 */
+  --spark: #F2A93B;             /* 완료 반짝임 */
+
+  /* ---- 컨트롤(버튼/입력) ---- */
+  --control-bg: #FFF8F1;
+  --control-bg-hover: #FCE4EC;
+  --control-border: #6B4A63;
+
+  /* ---- 상태(role) 색: 배경 / 외곽선 / 글자 ---- */
+  --bg-success:  #E5F5DB;  --border-success: #6CC24A;  --text-success: #2E6A1C;
+  --bg-warning:  #FDEED5;  --border-warning: #E2A84B;  --text-warning: #81510C;
+  --bg-danger:   #FBE3E3;  --border-danger:  #E08080;  --text-danger:  #A22B2B;
+
+  /* ---- 이미지 비교 뷰어 ---- */
+  --overlay-bg: rgba(46, 34, 48, 0.82);
+  --overlay-text: #FFF8F1;
+  --divider: #FFF8F1;
+
+  color-scheme: light;
+}
+
+/* ---- landscape (밤) ---- */
+:root[data-mode="night"],
+:root[data-theme="landscape"][data-mode="night"] {
+  --sky-top: #1E1B33;
+  --sky-bottom: #3A2E4F;
+  --scene-far: #2C2742;
+  --scene-near: #3B3354;
+  --scene-grass: #3D6E3A;
+  --scene-grass-dark: #2C5230;
+  --scene-soil: #1A1420;
+  --scene-soil-dot: #261D2C;
+  --scene-fx: #FFC86B;         /* 밤: 반딧불(등불색) */
+  --scene-fx-2: #FFE2A8;
+  --scene-prop-a: #1C1628;     /* 밤: 줄기는 실루엣 */
+  --scene-prop-b: #6A4370;     /* 꽃은 은은한 분홍 */
+  --scene-prop-c: #8E5D8C;
+  --scene-star: #FFF1D6;
+
+  --app-bg: #3A2E4F;
+  --surface-1: #2A2440;
+  --surface-2: #332C4D;
+  --surface-3: #403760;
+  --header-bg: #2A2440;
+  --footer-bg: #2A2440;
+
+  --frame: #6C5E96;
+  --border: #423A5E;
+  --border-strong: #8676B3;
+  --shadow: #13101F;
+  --backdrop: rgba(10, 8, 20, .7);
+  --brand-badge: var(--inju-night);
+  --kachi-outline: #BFAEE8;            /* 밤: 검은 까치가 하늘에 묻히지 않게 연보라 외곽선 */
+
+  --text: #F2EAF7;
+  --text-secondary: #D4C8E0;
+  --text-muted: #B3A6C6;
+  --text-link: #FFB0CF;
+
+  --accent: #FF9EC4;
+  --accent-text: #2A1B2E;
+  --text-accent: #FF9EC4;
+  --accent-soft: #3D2D4E;
+  --accent-2: #7FD45C;
+  --spark: #FFC86B;
+
+  --control-bg: #2A2440;
+  --control-bg-hover: #3D2D4E;
+  --control-border: #8676B3;
+
+  --bg-success:  #24382B;  --border-success: #7FD45C;  --text-success: #9BE07C;
+  --bg-warning:  #3B3022;  --border-warning: #FFC86B;  --text-warning: #FFC86B;
+  --bg-danger:   #3F2333;  --border-danger:  #FF8FA3;  --text-danger:  #FF9FB0;
+
+  --overlay-bg: rgba(20, 16, 32, 0.84);
+  --overlay-text: #F2EAF7;
+  --divider: #F2EAF7;
+
+  color-scheme: dark;
+}

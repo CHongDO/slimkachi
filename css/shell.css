@@ -1,0 +1,273 @@
+/* ============================================================
+   shell.css — 앱 셸 레이아웃 (헤더 / 본문 / 푸터) + 공용 컨트롤
+   ------------------------------------------------------------
+   색·폰트·모양은 theme.css 변수만 사용합니다. 색값 직접 작성 금지.
+
+   픽셀 테두리: border 대신 상하좌우 네 방향 box-shadow 로 선을 그린다.
+   네 그림자가 모서리에서 만나지 않아 모서리가 한 칸 깎인 '계단' 모양이 된다.
+     --bw   선 두께 (카드 = --px, 컨트롤 = --line)
+     --bc   선 색
+     --drop 그 뒤에 붙는 딱딱한 그림자 (없으면 투명)
+   ============================================================ */
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html {
+  background: var(--app-bg);
+  -webkit-text-size-adjust: 100%;
+}
+html, body {
+  margin: 0;
+  min-height: 100%;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--font-size);
+  line-height: 1.6;                 /* 15px → 24px */
+  /* 도트 폰트를 또렷하게: 가짜 굵게·기울임 금지, 부드럽게 처리 끄기 */
+  font-synthesis: none;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+  font-smooth: never;
+  text-rendering: optimizeSpeed;
+}
+body { background: transparent; }
+h1, h2, h3, h4, th, legend { font-family: var(--font-bold); font-weight: 700; }   /* 크기는 12px·24px 로만 */
+strong, b { font-weight: 400; color: var(--text); }   /* Galmuri14 에는 굵은체가 없다 — 가짜 굵게 대신 진한 색 */
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+/* ---- 픽셀 테두리 공통 ---- */
+.app-header, .app-footer, .intro, .card, .btn, .input, .toggle-pill, .stat-box {
+  --bw: var(--line); --bc: var(--frame); --drop: 0 0 0 0 transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow:
+    0 calc(-1 * var(--bw)) 0 0 var(--bc), 0 var(--bw) 0 0 var(--bc),
+    calc(-1 * var(--bw)) 0 0 0 var(--bc), var(--bw) 0 0 0 var(--bc),
+    var(--drop);
+}
+
+/* ---- 레이아웃 골격 ---- */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: var(--shell-max);
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-4) 0;
+}
+
+/* ---- 헤더 (카드) ---- */
+.app-header {
+  --bw: var(--px); --drop: var(--shadow-pixel);
+  background: var(--header-bg);
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.app-header__brand {
+  font-family: var(--font-bold); font-weight: 700;
+  font-size: var(--font-size-h); line-height: 1.5;
+  color: var(--text);
+  text-decoration: none;
+  display: flex; align-items: center; gap: var(--space-2);
+}
+/* ---- 로고 SlimKachi: [까치 아이콘] [SLIM 배지] Kachi ----
+   아이콘은 16×16 칸 그림을 정수배(32px = 2배, 모바일 16px = 1배)로. 색은 theme.css 의 브랜드 변수.
+   밤에는 검은 까치가 하늘에 묻히지 않게 한 칸 두께 연보라 외곽선(drop-shadow 4방향). */
+.brand { --kachi-px: 2px; gap: var(--space-2); }
+.brand__icon { width: 32px; height: 32px; flex: 0 0 auto; display: block; }
+.brand__icon .kk { fill: var(--kachi-ink); }
+.brand__icon .kw { fill: var(--kachi-cream); }
+.brand__icon .ky { fill: var(--hobak); }
+.brand__icon .kr { fill: var(--inju); }
+.brand__icon .kg { fill: var(--kachi-gray); }
+.brand__icon .ks { fill: var(--hanji); }
+.brand__icon .ke { fill: var(--hanji-edge); }
+:root[data-mode="night"] .brand__icon {
+  filter: drop-shadow(var(--kachi-px) 0 0 var(--kachi-outline)) drop-shadow(calc(-1 * var(--kachi-px)) 0 0 var(--kachi-outline))
+          drop-shadow(0 var(--kachi-px) 0 var(--kachi-outline)) drop-shadow(0 calc(-1 * var(--kachi-px)) 0 var(--kachi-outline));
+}
+/* SLIM 배지: 인주 바탕 + 크림 글자, 카드와 같은 픽셀 테두리(box-shadow) */
+.brand__badge {
+  --bw: var(--line); --bc: var(--kachi-ink);
+  font-family: var(--font-bold); font-weight: 700; font-size: var(--font-size-xs); line-height: 1;
+  padding: var(--space-1) var(--space-2); margin: 0 var(--line);
+  background: var(--brand-badge); color: var(--kachi-cream); letter-spacing: 1px;
+  box-shadow:
+    0 calc(-1 * var(--bw)) 0 0 var(--bc), 0 var(--bw) 0 0 var(--bc),
+    calc(-1 * var(--bw)) 0 0 0 var(--bc), var(--bw) 0 0 0 var(--bc);
+}
+:root[data-mode="night"] .brand__badge { --bc: var(--kachi-outline); }
+.brand__name { font-family: var(--font-bold); font-weight: 700; font-size: var(--font-size-h); line-height: 1.5; color: var(--text); margin-left: calc(-1 * var(--space-1)); }
+
+.app-header__spacer { flex: 1 1 auto; }
+.app-header__links { display: flex; gap: var(--space-4); }
+.app-header__links a { color: var(--text-secondary); text-decoration: none; }
+.app-header__links a:hover { color: var(--text-link); text-decoration: underline; text-underline-offset: 4px; }
+
+/* ---- 본문(앱 마운트 영역) ---- */
+.app-main {
+  flex: 1 1 auto;
+  padding: var(--space-5) 0 0;
+}
+#app-root { width: 100%; }
+
+/* ---- 작업실 아래 소개 섹션 (index.html 에 직접 쓴 SEO 텍스트, 카드 위) ---- */
+.intro {
+  --bw: var(--px); --drop: var(--shadow-pixel);
+  max-width: none;
+  margin: var(--space-6) 0 0;
+  padding: var(--space-5) var(--space-5) var(--space-3);
+  background: var(--surface-1);
+  color: var(--text);
+  line-height: var(--line-height);
+}
+.intro__sec + .intro__sec {
+  margin-top: var(--space-5); padding-top: var(--space-5);
+  background: linear-gradient(90deg, var(--border) 50%, transparent 0) top left / 8px var(--line) repeat-x;  /* 픽셀 점선 */
+}
+.intro h2 {
+  font-size: var(--font-size-h); line-height: 1.5; margin: 0 0 var(--space-3);
+  display: flex; align-items: center; gap: var(--space-2);
+}
+.intro h2::before {                          /* 벚꽃색 네모 점 */
+  content: ""; flex: 0 0 auto; width: 12px; height: 12px; background: var(--accent);
+  box-shadow: var(--px) var(--px) 0 0 var(--frame);
+}
+.intro h3 {
+  font-family: var(--font-ui); font-weight: 400; font-size: var(--font-size);
+  margin: var(--space-4) 0 var(--space-1); color: var(--text);
+}
+.intro p { margin: 0 0 var(--space-3); color: var(--text-secondary); }
+.intro__faq h3::before { content: "Q. "; color: var(--text-accent); }
+/* 넓은 화면: 주제 2칸, 자주 묻는 질문은 전체 폭 */
+@media (min-width: 900px) {
+  .intro {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-6);
+  }
+  .intro__sec + .intro__sec {        /* 세로로 쌓일 때 쓰던 점선 해제 */
+    margin-top: 0;
+    padding-top: 0;
+    background: none;
+  }
+  .intro__sec:nth-child(n + 3) {     /* 두 번째 줄부터 위에 점선 */
+    margin-top: var(--space-5);
+    padding-top: var(--space-5);
+    background: linear-gradient(90deg, var(--border) 50%, transparent 0) top left / 8px var(--line) repeat-x;
+  }
+  .intro__faq { grid-column: 1 / -1; }
+}
+
+/* ---- 푸터 (카드) — 맨 아래 풀 띠 위에 앉도록 아래 여백 ---- */
+.app-footer {
+  --bw: var(--px); --drop: var(--shadow-pixel);
+  background: var(--footer-bg);
+  margin: var(--space-6) 0 calc(64px + var(--space-5));
+  padding: var(--space-3) var(--space-4);
+  color: var(--text-muted);
+  display: flex; gap: var(--space-1) var(--space-4); flex-wrap: wrap; align-items: center;
+}
+.app-footer a { color: var(--text-secondary); text-decoration: none; }
+.app-footer a:hover { color: var(--text-link); text-decoration: underline; text-underline-offset: 4px; }
+.app-footer__spacer { flex: 1 1 auto; }
+.app-footer__notice {
+  flex: 1 1 100%; margin: 0; display: flex; align-items: center; gap: var(--space-2);
+  color: var(--text-secondary);
+}
+.app-footer__notice svg { color: var(--text-success); flex: 0 0 auto; }
+
+/* ---- 광고 자리: 장식 없이 (장면·그림자·테두리 없음, 평범한 바탕) ---- */
+ins.adsbygoogle, .google-auto-placed {
+  display: block; position: relative; z-index: 0;
+  background: var(--surface-1); box-shadow: none; border: 0;
+}
+
+/* ============================================================
+   공용 컨트롤 (앱들이 재사용)
+   ============================================================ */
+.btn {
+  --drop: 0 calc(var(--bw) + var(--px)) 0 0 var(--frame);   /* 아래로 한 칸 딱딱한 그림자 */
+  position: relative;
+  height: 36px; padding: 0 var(--space-3);
+  margin-bottom: var(--px);                                 /* 그림자 자리 */
+  background: var(--control-bg);
+  color: var(--text);
+  font-size: var(--font-size); font-family: var(--font-ui); line-height: 1;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  text-decoration: none; white-space: nowrap;
+  transition: none;
+}
+.btn:hover { background: var(--control-bg-hover); }
+/* 누르면 그림자 한 칸만큼 내려간다 */
+.btn:active:not(:disabled):not([aria-disabled="true"]) {
+  transform: translateY(var(--px));
+  --drop: 0 0 0 0 transparent;
+}
+.btn--icon { width: 36px; padding: 0; flex: 0 0 auto; }
+.btn--primary { background: var(--accent); color: var(--accent-text); }
+.btn--primary:hover { background: var(--accent); filter: brightness(1.06); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.input, select.input {
+  height: 36px; padding: 0 var(--space-2);
+  background: var(--control-bg);
+  color: var(--text);
+  font-size: var(--font-size); font-family: var(--font-ui);
+}
+.field label { display: block; font-size: var(--font-size); color: var(--text-secondary); margin-bottom: var(--space-1); }
+.row { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+.muted { color: var(--text-muted); font-size: var(--font-size); }
+
+.card {
+  --bw: var(--px); --drop: var(--shadow-pixel);
+  background: var(--surface-1);
+  padding: var(--space-4);
+}
+
+/* 토글 알약 */
+.toggle-pill {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  background: var(--control-bg);
+  cursor: pointer; font-size: var(--font-size);
+}
+.toggle-pill .state { font-family: var(--font-bold); font-weight: 700; font-size: var(--font-size-xs); color: var(--text-accent); }
+.toggle-pill.off .state { color: var(--text-muted); }
+
+/* 통계 박스 */
+.stat-box { --bc: var(--border); background: var(--surface-2); padding: var(--space-3) var(--space-4); flex: 1; }
+.stat-box p.label { font-size: var(--font-size); color: var(--text-secondary); margin: 0 0 var(--space-1); }
+.stat-box p.value { font-family: var(--font-bold); font-weight: 700; font-size: var(--font-size-h); margin: 0; }
+
+/* ---- 모바일 ---- */
+@media (max-width: 720px) {
+  .app-shell { padding: var(--space-3) var(--space-3) 0; }
+  .app-header { padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3); gap: var(--space-2); }
+  .app-header__brand { font-size: var(--font-size-xs); }
+  /* 로고는 비율대로 반으로: 아이콘 16px(1배)·외곽선 1px, 배지 여백을 줄이고 Kachi 는 12px(Galmuri11 Bold 설계 크기) */
+  .brand { --kachi-px: 1px; gap: var(--space-1); }
+  .brand__icon { width: 16px; height: 16px; }
+  .brand__badge { padding: 2px var(--space-1); letter-spacing: 0; }
+  .brand__name { font-size: var(--font-size-xs); margin-left: 0; }
+  .app-header__links { gap: var(--space-3); }
+  .app-main { padding-top: var(--space-4); }
+  .intro { padding: var(--space-4) var(--space-4) var(--space-2); margin-top: var(--space-5); }
+  .app-footer { margin-bottom: calc(48px + var(--space-4)); }
+}
+
+/* ---- 접근성/모션 ---- */
+:focus-visible { outline: var(--line) solid var(--text-accent); outline-offset: var(--px); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}

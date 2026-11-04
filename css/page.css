@@ -1,0 +1,76 @@
+/* ============================================================
+   page.css — 문서 페이지(about/features/privacy) 공용 스타일
+   theme.css 변수만 사용합니다. 배경 장면은 scene.css.
+   픽셀 테두리 방식은 shell.css 머리말과 같습니다 (--bw / --bc / --drop).
+   ============================================================ */
+
+* { box-sizing: border-box; }
+html { background: var(--app-bg); -webkit-text-size-adjust: 100%; }
+body.doc {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--font-size);
+  line-height: 1.6;
+  color: var(--text);
+  background: transparent;
+  min-height: 100vh;
+  font-synthesis: none;
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+  text-rendering: optimizeSpeed;
+}
+.doc h1, .doc h2, .doc__titlebar { font-family: var(--font-bold); font-weight: 700; }
+.doc strong, .doc b { font-weight: 400; color: var(--text); }
+
+.doc__card, .doc__notice, .doc__nav, .doc__back {
+  --bw: var(--px); --bc: var(--frame); --drop: var(--shadow-pixel);
+  box-shadow:
+    0 calc(-1 * var(--bw)) 0 0 var(--bc), 0 var(--bw) 0 0 var(--bc),
+    calc(-1 * var(--bw)) 0 0 0 var(--bc), var(--bw) 0 0 0 var(--bc),
+    var(--drop);
+}
+
+.doc__wrap { max-width: calc(36em + 4 * var(--space-5)); margin: 0 auto; padding: var(--space-6) var(--space-5) calc(64px + var(--space-6)); }
+.doc__card { background: var(--surface-1); }
+.doc__titlebar {
+  background: var(--accent);
+  color: var(--accent-text);
+  padding: var(--space-2) var(--space-5);
+  font-size: var(--font-size-xs); line-height: 2;
+  display: flex; align-items: center; gap: var(--space-2);
+}
+.doc__body { padding: var(--space-5) var(--space-5) var(--space-6); line-height: var(--line-height); }
+.doc__body > * { max-width: 36em; }   /* 한 줄 약 40~45자 */
+.doc__body h1 { font-size: var(--font-size-h); line-height: 1.5; margin: 0 0 var(--space-1); }
+.doc__body h2 { font-size: var(--font-size-h); line-height: 1.5; margin: var(--space-6) 0 var(--space-2); }
+.doc__body h3 { font-family: var(--font-ui); font-weight: 400; font-size: var(--font-size); margin: var(--space-4) 0 var(--space-1); color: var(--text-accent); }
+.doc__body code { font-family: var(--font-ui); background: var(--surface-2); padding: 0 var(--space-1); }
+.doc__body p, .doc__body li { font-size: var(--font-size); color: var(--text-secondary); }
+.doc__body ul { padding-left: var(--space-5); list-style: square; }
+.doc__body li::marker { color: var(--text-accent); }
+.doc__body a { color: var(--text-link); text-underline-offset: 4px; }
+.doc__meta { color: var(--text-muted); margin-bottom: var(--space-5); }
+.doc__back {
+  --bw: var(--line); --drop: 0 calc(var(--line) + var(--px)) 0 0 var(--frame);
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  margin-top: var(--space-5); padding: var(--space-1) var(--space-3);
+  text-decoration: none; background: var(--accent); color: var(--accent-text);
+}
+.doc__back:active { transform: translateY(var(--px)); --drop: 0 0 0 0 transparent; }
+/* 카드 밖 글도 카드 위에 */
+.doc__notice, .doc__nav {
+  --bw: var(--line); --drop: 0 0 0 0 transparent;
+  background: var(--surface-1); text-align: center; padding: var(--space-2) var(--space-3);
+}
+.doc__notice { color: var(--text-secondary); margin: var(--space-6) 0 0; }
+.doc__nav { color: var(--text-muted); margin: var(--space-3) 0 0; }
+.doc__nav a { color: var(--text-secondary); }
+:focus-visible { outline: var(--line) solid var(--text-accent); outline-offset: var(--px); }
+
+@media (max-width: 720px) {
+  .doc__wrap { padding: var(--space-4) var(--space-3) calc(48px + var(--space-5)); }
+  .doc__body { padding: var(--space-4) var(--space-4) var(--space-5); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
