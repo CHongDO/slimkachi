@@ -21,6 +21,7 @@ import {
   TARGETS, MIME, EXT, QUALITY_RANGE, targetFor, decodeSource, closeSource, resizeTo, makeThumb,
   prepareForFormat, searchQuality, fitUnder, score, passes, packResult, parseColor, convInfo,
 } from '../shared/image/pipeline.js';
+import { t as tx } from '../i18n/index.js';
 
 const RESIZE_MODE = 'balanced';          // 크기만 바꿀 때 기본 저장 화질 기준 (눈에 띄는 손상 없음)
 const TARGET_MODE = 'size';              // 목표 용량 모드에서 '이 정도면 괜찮다'로 보는 기준
@@ -31,7 +32,7 @@ const MAX_STEPS = 14;
 export async function resizeImage(file, o, ctx) {
   const src = new Uint8Array(await file.arrayBuffer());
   const type = detectType(src);
-  if (type === 'svg' || type === 'psd') throw Object.assign(new Error('이 형식은 아직 지원하지 않습니다'), { notice: true });
+  if (type === 'svg' || type === 'psd') throw Object.assign(new Error(tx('thumb.001')), { notice: true });
   const stripped = stripMetadata(type, src);
   const format = outputFormat(o.format, type);
   const same = format === type;
@@ -43,10 +44,10 @@ export async function resizeImage(file, o, ctx) {
 
   if (animated && same) {
     return keep(type, src.length, lightest, null,
-      '움직이는 이미지는 크기를 바꾸면 움직임이 사라져 원본을 유지했습니다');
+      tx('rsz.001'));
   }
 
-  ctx.progress('이미지 해석', 0.04);
+  ctx.progress(tx('cmp.003'), 0.04);
   const source = await decodeSource(src, type);
   try {
     makeThumb(source).then(ctx.thumb, () => {});
@@ -55,11 +56,11 @@ export async function resizeImage(file, o, ctx) {
 
     if (o.method === 'target') {
       const T = Math.floor(Number(o.targetBytes) || 0);
-      if (!(T > 0)) throw new Error('목표 용량을 입력해 주세요');
+      if (!(T > 0)) throw new Error(tx('rsz.002'));
       // 원래 형식 그대로이고 이미 목표 이하면 손대지 않는다 (메타데이터만 정리)
       if (same && (lightest || src).length <= T) {
         return keep(type, src.length, lightest, { width: W, height: H, ...orig },
-          '이미 목표 용량 이하라 해상도·화질을 그대로 두었습니다', { targetBytes: T });
+          tx('rsz.003'), { targetBytes: T });
       }
       const r = format === 'png'
         ? await fitTargetPng(source, T, ctx)
@@ -68,13 +69,13 @@ export async function resizeImage(file, o, ctx) {
     }
 
     const dims = computeDims(W, H, o);
-    const blocked = dims.upscale ? '지정 크기가 원본보다 커서 늘리지 않았습니다' : '';
+    const blocked = dims.upscale ? tx('rsz.004') : '';
     if (dims.width === W && dims.height === H && same) {
       return keep(type, src.length, lightest, { width: W, height: H, ...orig },
-        blocked ? `원본(${W}×${H})이 지정 크기보다 작아 그대로 두었습니다 (확대 안 함)` : '크기 변화가 없어 원본을 유지했습니다');
+        blocked ? tx('rsz.005', { W, H }) : tx('rsz.006'));
     }
 
-    ctx.progress(`${dims.width}×${dims.height}로 줄이는 중`, 0.1);
+    ctx.progress(tx('rsz.007', { width: dims.width, height: dims.height }), 0.1);
     const img = await resizeTo(source, dims.width, dims.height);
     const mode = TARGETS[o.mode] ? o.mode : RESIZE_MODE;
     const r = await encodeResized(img, type, format, src.length, ctx, mode, bg);
@@ -86,7 +87,7 @@ export async function resizeImage(file, o, ctx) {
 
 /** 원본(또는 메타데이터만 지운 원본)을 그대로 돌려준다 */
 function keep(type, origSize, lightest, dims, note, extra = {}) {
-  if (lightest) return packResult('stripped', lightest, type, { ...dims, ssim: 1, note: `${note} (메타데이터만 제거)`, ...extra });
+  if (lightest) return packResult('stripped', lightest, type, { ...dims, ssim: 1, note: tx('rsz.008', { note }), ...extra });
   return { kind: 'original', size: origSize, mime: MIME[type], ext: EXT[type], ssim: 1, ...dims, note, ...extra };
 }
 
@@ -122,9 +123,9 @@ export function computeDims(W, H, o) {
 async function encodeResized(img, srcType, format, origSize, ctx, mode, bg) {
   const { opaque, filled } = prepareForFormat(img, srcType, format, bg);
   if (format === 'png') {
-    ctx.progress('PNG 무손실 저장', 0.3);
+    ctx.progress(tx('cmp.007'), 0.3);
     const bytes = await optimisePng(img, img.width * img.height > 4_000_000 ? 1 : 2);
-    return packResult('lossless', bytes, 'png', { ssim: 1, note: '무손실 저장' });
+    return packResult('lossless', bytes, 'png', { ssim: 1, note: tx('rsz.009') });
   }
   const { target, scale } = targetFor(mode, img);
   const report = (label, f) => ctx.progress(label, 0.15 + 0.8 * f);
@@ -135,7 +136,7 @@ async function encodeResized(img, srcType, format, origSize, ctx, mode, bg) {
   // 같은 형식인데 크기를 줄였더니 오히려 커졌다면(원본이 강하게 압축된 경우) 원본 용량 아래로 맞춘다
   if (format === srcType && bytes.length >= origSize) {
     const fit = await fitUnder(format, img, Math.floor(origSize * 0.97), mode, { hi: quality });
-    if (fit) { bytes = fit.bytes; quality = fit.q; note = '원본보다 커지지 않도록 화질을 맞췄습니다'; }
+    if (fit) { bytes = fit.bytes; quality = fit.q; note = tx('rsz.010'); }
   }
   const s = await score(format, img, bytes, opaque, scale);
   return packResult('lossy', bytes, format, { quality, ssim: s.mean, ssimLow: s.low, note, filled });
@@ -160,7 +161,7 @@ async function fitTargetLossy(source, srcType, format, T, ctx, bg) {
     const w = Math.max(1, Math.round(W * s)), h = Math.max(1, Math.round(H * s));
     step++;
     const base = 0.06 + 0.9 * (1 - 0.72 ** step);
-    ctx.progress(s === 1 ? `화질을 낮춰 맞추는 중 (${w}×${h})` : `해상도를 줄여 맞추는 중 (${w}×${h})`, base);
+    ctx.progress(s === 1 ? tx('rsz.011', { w, h }) : tx('rsz.012', { w, h }), base);
     const img = await resizeTo(source, w, h);
     const { opaque, filled } = prepareForFormat(img, srcType, format, bg);
     const known = new Map();
@@ -192,7 +193,7 @@ async function fitTargetLossy(source, srcType, format, T, ctx, bg) {
   }
 
   if (!accepted && fallback) accepted = fallback;
-  if (!accepted) throw new Error('목표 용량이 너무 작아 맞출 수 없습니다');
+  if (!accepted) throw new Error(tx('rsz.013'));
 
   // 실패한 배율과 채택한 배율 사이를 좁혀 더 큰 해상도를 노린다
   if (accepted.ok && failedAt) {
@@ -205,12 +206,12 @@ async function fitTargetLossy(source, srcType, format, T, ctx, bg) {
   }
 
   const resized = accepted.s < 1;
-  const notes = [resized ? '화질을 지키려고 해상도를 줄여 맞췄습니다' : '해상도는 그대로, 화질만 조정했습니다'];
+  const notes = [resized ? tx('rsz.014') : tx('rsz.015')];
   return packResult('lossy', accepted.fit.bytes, format, {
     width: accepted.w, height: accepted.h, quality: accepted.fit.quality,
     ssim: accepted.fit.ssim, ssimLow: accepted.fit.ssimLow, filled: accepted.filled,
     note: notes.join(' · '),
-    warn: accepted.ok ? '' : '목표에 맞추느라 화질이 다소 떨어졌습니다',
+    warn: accepted.ok ? '' : tx('rsz.016'),
   });
 }
 
@@ -221,7 +222,7 @@ async function fitTargetPng(source, T, ctx) {
   async function tryScale(s) {
     const w = Math.max(1, Math.round(W * s)), h = Math.max(1, Math.round(H * s));
     step++;
-    ctx.progress(`해상도를 줄여 맞추는 중 (${w}×${h})`, 0.06 + 0.9 * (1 - 0.72 ** step));
+    ctx.progress(tx('rsz.012', { w, h }), 0.06 + 0.9 * (1 - 0.72 ** step));
     const img = await resizeTo(source, w, h);
     const bytes = await optimisePng(img, w * h > 2_000_000 ? 1 : 2);
     return { s, w, h, bytes };
@@ -234,7 +235,7 @@ async function fitTargetPng(source, T, ctx) {
     failedAt = s;
     s *= Math.max(0.25, Math.min(0.92, Math.sqrt(T / last.bytes.length) * 0.97));
   }
-  if (!accepted) throw new Error('목표 용량이 너무 작아 맞출 수 없습니다');
+  if (!accepted) throw new Error(tx('rsz.013'));
   if (failedAt) {
     let lo = accepted.s, hi = failedAt;
     for (let k = 0; k < 3 && hi / lo > 1.05; k++) {
@@ -245,6 +246,6 @@ async function fitTargetPng(source, T, ctx) {
   }
   return packResult('lossless', accepted.bytes, 'png', {
     width: accepted.w, height: accepted.h, ssim: 1,
-    note: accepted.s < 1 ? 'PNG는 무손실이라 해상도를 줄여 맞췄습니다 (JPG로 바꾸면 해상도를 더 지킬 수 있어요)' : 'PNG 무손실 최적화',
+    note: accepted.s < 1 ? tx('rsz.017') : tx('cmp.004'),
   });
 }

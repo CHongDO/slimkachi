@@ -7,6 +7,7 @@
    ============================================================ */
 
 import { apps } from './appRegistry.js';
+import { t as tx } from './i18n/index.js';
 
 export function initAppHost() {
   const root = document.getElementById('app-root');
@@ -17,7 +18,7 @@ export function initAppHost() {
   try {
     app.mount(root); // 한 화면뿐이라 정리 함수는 페이지를 떠날 때 브라우저가 대신한다
   } catch (err) {
-    root.innerHTML = `<div class="card"><p class="muted">화면을 불러오지 못했습니다. (${app.id})</p></div>`;
+    root.innerHTML = `<div class="card"><p class="muted">${tx('app.001', { id: app.id })}</p></div>`;
     console.error('[app mount error]', app.id, err);
   }
 }

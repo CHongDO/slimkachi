@@ -11,6 +11,7 @@
 
 import { readZip, entryData } from './zip.js';
 import { isCfb, readCfb, findEntry } from './cfb.js';
+import { t as tx } from '../../i18n/index.js';
 
 const FFLATE_URL = 'https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js';
 let fflateP = null;
@@ -22,7 +23,8 @@ export function loadFflate() {
 export const DOC_EXTS = ['hwp', 'hwpx', 'docx', 'pptx', 'xlsx'];
 const MEDIA_DIR = { hwpx: 'BinData/', docx: 'word/media/', pptx: 'ppt/media/', xlsx: 'xl/media/' };
 const PHOTO_EXT = /\.(jpe?g|png|gif|bmp|tiff?|webp|wdp|jxr)$/i;
-const NAME = { hwp: '한글', hwpx: '한글', docx: '워드', pptx: '파워포인트', xlsx: '엑셀' };
+// 문서 종류 이름 — 처리 때마다 그 언어로 (워커는 시작한 뒤에 언어를 받음)
+const NAME = (ext) => ({ hwp: tx('docopen.001'), hwpx: tx('docopen.001'), docx: tx('docopen.002'), pptx: tx('docopen.003'), xlsx: tx('docopen.004') })[ext];
 
 const notice = (msg) => Object.assign(new Error(msg), { notice: true });
 const unsupported = (msg) => Object.assign(new Error(msg), { unsupported: true });
@@ -42,15 +44,15 @@ export function photoType(b) {
  */
 export async function openDoc(u8, fileName) {
   const ext = extOf(fileName);
-  if (!DOC_EXTS.includes(ext)) throw unsupported('지원하지 않는 문서 형식입니다');
+  if (!DOC_EXTS.includes(ext)) throw unsupported(tx('docopen.005'));
   const fflate = await loadFflate();
   const zipSig = u8[0] === 0x50 && u8[1] === 0x4b;
 
   if (ext === 'hwp') {
     if (!isCfb(u8)) {
       const head = String.fromCharCode(...u8.subarray(0, 32));
-      if (head.startsWith('HWP Document File')) throw notice('한글 97 이전 형식(HWP 3.0)은 지원하지 않습니다. 한글에서 다시 저장한 뒤 올려 주세요.');
-      throw unsupported('한글(HWP) 파일이 아니거나 손상된 파일입니다');
+      if (head.startsWith('HWP Document File')) throw notice(tx('docopen.006'));
+      throw unsupported(tx('docopen.007'));
     }
     return openHwp(u8, fflate);
   }
@@ -58,31 +60,31 @@ export async function openDoc(u8, fileName) {
     // 암호를 건 워드·파워포인트·엑셀은 ZIP 이 아니라 복합 파일(EncryptedPackage) 안에 들어 있다
     const c = readCfb(u8);
     const names = c.entries.map((e) => e.name);
-    if (names.includes('EncryptedPackage') || names.includes('EncryptionInfo')) throw notice(`암호가 걸린 ${NAME[ext]} 문서는 처리할 수 없습니다. 암호를 해제한 뒤 다시 올려 주세요.`);
-    if (names.some((n) => n.includes('DataSpaces'))) throw notice(`보안(DRM)이 적용된 ${NAME[ext]} 문서는 처리할 수 없습니다.`);
-    throw unsupported(`${ext.toUpperCase()} 형식이 아닌 파일입니다 (예전 .doc·.ppt·.xls 형식일 수 있어요)`);
+    if (names.includes('EncryptedPackage') || names.includes('EncryptionInfo')) throw notice(tx('docopen.008', { p: NAME(ext) }));
+    if (names.some((n) => n.includes('DataSpaces'))) throw notice(tx('docopen.009', { p: NAME(ext) }));
+    throw unsupported(tx('docopen.010', { p: ext.toUpperCase() }));
   }
-  if (!zipSig) throw unsupported(`${ext.toUpperCase()} 파일이 아니거나 손상된 파일입니다`);
+  if (!zipSig) throw unsupported(tx('docopen.011', { p: ext.toUpperCase() }));
   return openZipDoc(u8, ext, fflate);
 }
 
 function openZipDoc(u8, ext, fflate) {
   const zip = readZip(u8);
   const names = zip.entries.map((e) => e.name);
-  if (zip.entries.some((e) => e.flags & 1)) throw notice(`암호가 걸린 ${NAME[ext]} 문서는 처리할 수 없습니다. 암호를 해제한 뒤 다시 올려 주세요.`);
+  if (zip.entries.some((e) => e.flags & 1)) throw notice(tx('docopen.008', { p: NAME(ext) }));
   // 전자 서명: 내용을 바꾸면 서명이 깨지므로 처리하지 않는다
   if (names.some((n) => /^_xmlsignatures\//i.test(n) || /^META-INF\/signatures/i.test(n))) {
-    throw notice(`전자 서명된 ${NAME[ext]} 문서는 사진을 바꾸면 서명이 무효가 되어 처리하지 않습니다.`);
+    throw notice(tx('docopen.012', { p: NAME(ext) }));
   }
   if (ext === 'hwpx') {
     const man = zip.entries.find((e) => e.name === 'META-INF/manifest.xml');
     if (man) {
       const xml = new TextDecoder().decode(entryData(u8, man, fflate));
-      if (/encryption-data|EncryptedData|encrypt/i.test(xml)) throw notice('암호가 걸린 한글 문서는 처리할 수 없습니다. 암호를 해제한 뒤 다시 올려 주세요.');
+      if (/encryption-data|EncryptedData|encrypt/i.test(xml)) throw notice(tx('docopen.013'));
     }
-    if (!names.includes('mimetype') && !names.some((n) => /^Contents\//.test(n))) throw unsupported('한글(HWPX) 파일이 아니거나 손상된 파일입니다');
+    if (!names.includes('mimetype') && !names.some((n) => /^Contents\//.test(n))) throw unsupported(tx('docopen.014'));
   } else if (!names.includes('[Content_Types].xml')) {
-    throw unsupported(`${ext.toUpperCase()} 파일이 아니거나 손상된 파일입니다`);
+    throw unsupported(tx('docopen.011', { p: ext.toUpperCase() }));
   }
   const dir = MEDIA_DIR[ext];
   const images = zip.entries
@@ -100,16 +102,16 @@ function openZipDoc(u8, ext, fflate) {
 function openHwp(u8, fflate) {
   const cfb = readCfb(u8);
   const fh = findEntry(cfb, 'FileHeader');
-  if (!fh) throw unsupported('한글(HWP) 파일이 아니거나 손상된 파일입니다');
+  if (!fh) throw unsupported(tx('docopen.007'));
   const h = cfb.data(fh.index);
   const sig = String.fromCharCode(...h.subarray(0, 17));
-  if (sig !== 'HWP Document File' || h.length < 40) throw unsupported('한글(HWP) 파일이 아니거나 손상된 파일입니다');
+  if (sig !== 'HWP Document File' || h.length < 40) throw unsupported(tx('docopen.007'));
   const props = new DataView(h.buffer, h.byteOffset, h.byteLength).getUint32(36, true);
-  if (props & (1 << 1)) throw notice('암호가 걸린 한글 문서는 처리할 수 없습니다. 한글에서 암호를 해제한 뒤 다시 올려 주세요.');
-  if (props & (1 << 2)) throw notice('배포용 한글 문서는 내용을 바꿀 수 없게 보호되어 있어 처리하지 않습니다.');
-  if (props & ((1 << 4) | (1 << 10))) throw notice('보안(DRM)이 적용된 한글 문서는 처리할 수 없습니다.');
-  if (props & (1 << 8)) throw notice('공인인증서로 암호화된 한글 문서는 처리할 수 없습니다.');
-  if (props & (1 << 7)) throw notice('전자 서명된 한글 문서는 사진을 바꾸면 서명이 무효가 되어 처리하지 않습니다.');
+  if (props & (1 << 1)) throw notice(tx('docopen.015'));
+  if (props & (1 << 2)) throw notice(tx('docopen.016'));
+  if (props & ((1 << 4) | (1 << 10))) throw notice(tx('docopen.017'));
+  if (props & (1 << 8)) throw notice(tx('docopen.018'));
+  if (props & (1 << 7)) throw notice(tx('docopen.019'));
   const images = cfb.entries
     .filter((e) => e.type === 2 && e.path && e.path.startsWith('BinData/') && PHOTO_EXT.test(e.name))
     .map((e) => ({ key: e.index, name: e.name, size: e.size, ext: extOf(e.name) }));

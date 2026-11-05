@@ -8,6 +8,8 @@
    ZIP64·암호화 ZIP 은 다루지 않는다(오류).
    ============================================================ */
 
+import { t as tx } from '../../i18n/index.js';
+
 const SIG_LOCAL = 0x04034b50, SIG_CD = 0x02014b50, SIG_EOCD = 0x06054b50;
 
 const CRC_TABLE = (() => {
@@ -35,17 +37,17 @@ export function readZip(u8) {
   for (let i = u8.length - 22; i >= Math.max(0, u8.length - 22 - 65535); i--) {
     if (dv.getUint32(i, true) === SIG_EOCD) { eocd = i; break; }
   }
-  if (eocd < 0) throw new Error('ZIP 끝 정보를 찾지 못했습니다');
+  if (eocd < 0) throw new Error(tx('zip.001'));
   const count = dv.getUint16(eocd + 10, true);
   const cdSize = dv.getUint32(eocd + 12, true);
   const cdOffset = dv.getUint32(eocd + 16, true);
   if (count === 0xffff || cdOffset === 0xffffffff || cdSize === 0xffffffff) {
-    throw Object.assign(new Error('아주 큰 형식(ZIP64)의 문서는 아직 지원하지 않습니다'), { notice: true });
+    throw Object.assign(new Error(tx('zip.002')), { notice: true });
   }
   const entries = [];
   let p = cdOffset;
   for (let i = 0; i < count; i++) {
-    if (dv.getUint32(p, true) !== SIG_CD) throw new Error('ZIP 목록이 손상되었습니다');
+    if (dv.getUint32(p, true) !== SIG_CD) throw new Error(tx('zip.003'));
     const flags = dv.getUint16(p + 8, true);
     const nameLen = dv.getUint16(p + 28, true), extraLen = dv.getUint16(p + 30, true), commentLen = dv.getUint16(p + 32, true);
     const nameBytes = u8.subarray(p + 46, p + 46 + nameLen);
@@ -69,19 +71,19 @@ export function readZip(u8) {
 /** 항목의 압축된 데이터 위치 */
 function dataRange(u8, e) {
   const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
-  if (dv.getUint32(e.lho, true) !== SIG_LOCAL) throw new Error(`ZIP 항목이 손상되었습니다: ${e.name}`);
+  if (dv.getUint32(e.lho, true) !== SIG_LOCAL) throw new Error(tx('zip.004', { name: e.name }));
   const start = e.lho + 30 + dv.getUint16(e.lho + 26, true) + dv.getUint16(e.lho + 28, true);
   return [start, start + e.csize];
 }
 
 /** 항목 내용(압축 해제) */
 export function entryData(u8, e, fflate) {
-  if (e.flags & 1) throw Object.assign(new Error('암호가 걸린 문서는 처리할 수 없습니다'), { notice: true });
+  if (e.flags & 1) throw Object.assign(new Error(tx('zip.005')), { notice: true });
   const [a, b] = dataRange(u8, e);
   const raw = u8.subarray(a, b);
   if (e.method === 0) return raw.slice();
   if (e.method === 8) return fflate.inflateSync(raw, { out: new Uint8Array(e.usize) });
-  throw new Error(`지원하지 않는 ZIP 압축 방식(${e.method}): ${e.name}`);
+  throw new Error(tx('zip.006', { method: e.method, name: e.name }));
 }
 
 /**

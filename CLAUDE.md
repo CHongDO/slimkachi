@@ -44,7 +44,8 @@
 
 ## 폴더 구조
 ```
-index.html                    진입점 (셸 뼈대 + SEO 메타 + 하단 '서버 전송 없음' 안내)
+index.html                    진입점 (셸 뼈대 + SEO 메타 + 하단 '서버 전송 없음' 안내) — 한국어
+en/index.html  ja/index.html  영어·일본어 진입점 (같은 css·js 를 ../ 로, 소개글은 그 언어로 새로 쓴 HTML)
 ads.txt                       AdSense 판매자 정보
 css/theme.css                 테마 변수: 공통 토큰 + 테마 팩(landscape 낮/밤) + 갈무리 폰트 (← 색/간격 변경은 여기만)
 css/scene.css                 배경 장면 레이어 구조 (하늘·구름·까치·별·별똥별·달·먼 산·먼 나무·안개·가까운 산·가까운 나무·땅·꽃잎/반딧불)
@@ -52,7 +53,8 @@ css/shell.css                 셸 레이아웃 + 공용 컨트롤(.btn .btn--ico
 css/page.css                  문서 페이지 공용 스타일
 assets/themes/landscape/      배경 마스크 SVG (산 2겹·풀·흙·꽃잎, 합계 약 3KB)
 css/apps/workspace.css        작업실 화면 스타일 (mount 시 <link> 로드)
-js/main.js                    진입점
+js/main.js                    진입점 (i18n 사전을 기다리느라 DOMContentLoaded 뒤에 실행될 수 있어 readyState 확인)
+js/i18n/                      화면 문구 사전: index.js(tx·setLang) · ko.js · en.js · ja.js
 js/theme.js                   낮/밤 토글(localStorage 'ft-mode') + 배경 패럴랙스
 js/moon.js                    밤하늘 달을 캔버스에 노이즈로 그리기 (로드 때 한 번)
 js/magpie.js                  낮 하늘에 가끔 나는 갓 쓴 까치 (스프라이트 SVG 생성 + 비행·착지 단계 예약)
@@ -97,6 +99,20 @@ js/shared/                    공용 코드
 pages/                        about / features / privacy (애드센스 심사용)
 robots.txt sitemap.xml        SEO
 ```
+
+## 다국어 (ko / en / ja)
+- 언어는 각 페이지의 `<html lang>`. `js/i18n/index.js` 가 최상위 await 로 그 사전을 불러 두고, 코드에서는 `tx('키', { 이름: 값 })`.
+  사전 값 '{이름}' 에 값이 들어가고, 함수 값은 언어마다 규칙이 다른 표기(`fmt.mp` 화소 수 등).
+- **JS 에 화면 문구를 직접 쓰지 말 것** — 새 문구는 ko.js·en.js·ja.js 세 사전에 같은 키로 넣는다(ko 는 원래 문구 그대로).
+  키는 '파일 접두어.번호'(ws=workspace, cmp=imageCompress, rsz=imageResize, pdf, doc, docopen, zip, cfb, dec, pipe, lim …).
+- 워커는 document 가 없어 처음엔 한국어 → WorkerPool 이 작업마다 `lang` 을 보내고 workerHost 가 `setLang` 후 처리.
+  그래서 엔진에서는 모듈 최상위(불러올 때)에 tx() 문구를 만들면 안 된다 — 함수 안에서(예: pdf/compress 의 ENCRYPTED(), doc/open 의 NAME(ext)).
+- 문구로 로직을 판단하지 말 것(번역되면 깨짐). 예: imageCompress 는 원본 유지 이유를 `reason` 값으로 따로 넘긴다.
+- 페이지: 세 페이지 모두 hreflang(ko·en·ja·x-default→/), canonical·og:locale·JSON-LD inLanguage 를 그 언어로. 헤더 언어 전환 링크,
+  자동 리디렉션 없음. 소개·기능·개인정보 페이지는 아직 한국어만 — en/ja 에서는 한국어 페이지로 링크(hreflang="ko").
+  en/ja 소개글은 HWP·HWPX 를 언급하지 않는다(기능은 그대로 지원, 작업실 지원 형식 줄도 ws.fmtDoc 로 DOCX·PPTX·XLSX 만).
+- 글꼴: Galmuri14 는 일본어 가나·한자를 모두 갖고 있지만 Galmuri11 Bold 에는 가나·한자가 하나도 없다 → 일본어 제목·라벨은
+  --font-bold 다음 글꼴인 Galmuri14(굵지 않음, 12/24px 라 정수배 아님)로 대신 그려진다. ✓(U+2713)는 두 글꼴 모두 없음(시스템 글꼴).
 
 ## 작업실 동작 (workspace.js)
 - 올리기 전 위험 계수(limits.js, 기준 기기 i5-6500/RAM 4GB): 사진 = 가로×세로×4×3 (헤더로 못 구하면 용량×12). PDF 는 파일 용량 그대로.
@@ -292,4 +308,5 @@ python -m http.server 5500     # → http://localhost:5500
 - [ ] 업로드 한도: 4,800만 화소 사진(제외)·2,400만(추가)·200MB PDF(제외)·40장(30장만)·25장+10장(5장만), 팝업 키보드 조작
 - [ ] 형식: BMP(→PNG 감소), 움직이는 GIF(첫 장면 안내), 아이폰 HEIC(→JPG), TIFF(회전 포함), AVIF, PSD·SVG·문서(지원 안 함 안내),
       투명 PNG→JPG(배경색·안내), JPG→PNG(용량 증가 안내), 내보내기 파일명 확장자, HEIC·TIFF 를 넣을 때만 libheif·utif·pako 를 받는지(Network)
-- [ ] 새 기능 추가 시 features.html·sitemap.xml 갱신
+- [ ] 다국어: /en/·/ja/ 에서 화면에 한국어가 남지 않는지(언어 전환 '한국어' 링크 제외), hreflang·sitemap(xhtml:link) 확인
+- [ ] 새 기능 추가 시 features.html·sitemap.xml 갱신 (+ en/ja 소개글, 세 사전)

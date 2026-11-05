@@ -18,50 +18,52 @@ import { TARGETS } from '../../shared/image/pipeline.js';
 import { loadPdfLib, runQpdf } from './libs.js';
 import { measureImageUse } from './content.js';
 import { optimiseImages } from './images.js';
+import { t as tx } from '../../i18n/index.js';
 
 const MIN_GAIN = 0.03; // 3% 도 안 줄면 원본 유지
 const QPDF_ARGS = [
   '--object-streams=generate', '--compress-streams=y', '--recompress-flate', '--compression-level=9',
   '--decode-level=generalized', '--remove-unreferenced-resources=yes',
 ];
-const ENCRYPTED = '암호(보안)가 설정된 PDF라 줄일 수 없습니다. PDF 프로그램에서 암호를 해제한 뒤 다시 넣어 주세요.';
-const KEPT = '이미 최적화된 PDF입니다 — 원본을 유지했습니다';
+// 문구는 처리 때마다 그 언어로 만든다 (워커는 시작한 뒤에 언어를 받음)
+const ENCRYPTED = () => tx('pdf.001');
+const KEPT = () => tx('pdf.002');
 /** 오류가 아니라 '처리할 수 없는 파일' 안내 (화면에서 경고색으로 표시) */
 const notice = (message) => Object.assign(new Error(message), { notice: true });
 
 export async function compressPdf(file, o, ctx) {
   const mode = TARGETS[o.mode] ? o.mode : 'size';
-  ctx.progress('PDF 읽는 중', 0.02);
+  ctx.progress(tx('pdf.003'), 0.02);
   const src = new Uint8Array(await file.arrayBuffer());
-  if (!isPdf(src)) throw new Error('PDF 파일이 아닙니다');
+  if (!isPdf(src)) throw new Error(tx('pdf.004'));
 
-  ctx.progress('라이브러리 준비', 0.04);
+  ctx.progress(tx('pdf.005'), 0.04);
   const L = await loadPdfLib();
   const load = (bytes) => L.PDFDocument.load(bytes, { ignoreEncryption: true, updateMetadata: false, throwOnInvalidObject: false });
 
   let doc = null;
   try { doc = await load(src); } catch (e) { console.warn('pdf-lib load', e); }
-  if (doc && doc.isEncrypted) throw notice(ENCRYPTED);
+  if (doc && doc.isEncrypted) throw notice(ENCRYPTED());
   if (!doc) {
     // 구조가 깨진 파일: qpdf 로 먼저 복구해 본다
-    if (hasEncryptKey(src)) throw notice(ENCRYPTED);
-    ctx.progress('손상된 구조 복구 중', 0.06);
+    if (hasEncryptKey(src)) throw notice(ENCRYPTED());
+    ctx.progress(tx('pdf.006'), 0.06);
     try { doc = await load(await runQpdf(src, ['--object-streams=disable'])); }
-    catch { throw new Error('PDF 구조를 읽을 수 없습니다. 파일이 손상되었을 수 있어요.'); }
-    if (doc.isEncrypted) throw notice(ENCRYPTED);
+    catch { throw new Error(tx('pdf.007')); }
+    if (doc.isEncrypted) throw notice(ENCRYPTED());
   }
   const pages = doc.getPageCount();
 
-  ctx.progress('페이지 내용 분석', 0.08);
+  ctx.progress(tx('pdf.008'), 0.08);
   const sizes = measureImageUse(L, doc);
 
   const stats = await optimiseImages(L, doc, mode, sizes, (label, f) => ctx.progress(label, 0.1 + 0.75 * f));
 
-  ctx.progress('중복·부가 데이터 정리', 0.86);
+  ctx.progress(tx('pdf.009'), 0.86);
   const deduped = dedupeStreams(L, doc);
   stripExtras(L, doc);
 
-  ctx.progress('무손실 압축 (qpdf)', 0.9);
+  ctx.progress(tx('pdf.010'), 0.9);
   const saved = await doc.save({ useObjectStreams: false, addDefaultPage: false, updateFieldAppearances: false });
   let out;
   try {
@@ -72,7 +74,7 @@ export async function compressPdf(file, o, ctx) {
   }
 
   // 안전 확인: 결과를 다시 열어 쪽수가 같은지
-  ctx.progress('결과 확인', 0.97);
+  ctx.progress(tx('ws.140'), 0.97);
   let ok = false;
   try { ok = (await load(out)).getPageCount() === pages; } catch { ok = false; }
   if (!ok) {
@@ -84,16 +86,16 @@ export async function compressPdf(file, o, ctx) {
   }
 
   if (out.length > src.length * (1 - MIN_GAIN)) {
-    return { kind: 'original', size: src.length, mime: 'application/pdf', ext: 'pdf', pages, note: KEPT, stats };
+    return { kind: 'original', size: src.length, mime: 'application/pdf', ext: 'pdf', pages, note: KEPT(), stats };
   }
   const lossless = stats.recompressed === 0;
   const note = [];
   if (stats.recompressed) {
-    note.push(`이미지 ${stats.recompressed}개 재압축` + (stats.downsampled ? ` (${stats.downsampled}개 해상도 조정)` : ''));
+    note.push(tx('pdf.011', { recompressed: stats.recompressed }) + (stats.downsampled ? tx('pdf.012', { downsampled: stats.downsampled }) : ''));
   } else {
-    note.push('무손실 최적화 (이미지·글자 변화 없음)');
+    note.push(tx('pdf.013'));
   }
-  if (deduped) note.push(`중복 ${deduped}개 합침`);
+  if (deduped) note.push(tx('pdf.014', { deduped }));
   return {
     kind: lossless ? 'lossless' : 'lossy', bytes: out, size: out.length,
     mime: 'application/pdf', ext: 'pdf', pages, stats, note: note.join(' · '),

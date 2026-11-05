@@ -20,6 +20,7 @@ import {
   TARGETS, MIME, EXT, QUALITY_RANGE, targetFor, decodeImage, makeThumb, prepareForFormat, searchQuality,
   score, packResult, parseColor, convInfo,
 } from '../shared/image/pipeline.js';
+import { t as tx } from '../i18n/index.js';
 
 const MIN_LOSSY_GAIN = 0.05; // 손실 재인코딩은 최소 5% 이상 줄어야 채택
 
@@ -27,11 +28,11 @@ export async function compressImage(file, options, ctx) {
   const mode = TARGETS[options.mode] ? options.mode : 'size';
   const src = new Uint8Array(await file.arrayBuffer());
   const type = detectType(src);
-  if (type === 'svg' || type === 'psd') throw Object.assign(new Error('이 형식은 아직 지원하지 않습니다'), { notice: true });
+  if (type === 'svg' || type === 'psd') throw Object.assign(new Error(tx('thumb.001')), { notice: true });
   const format = outputFormat(options.format, type);
   if (format !== type) return convertImage(src, type, format, mode, options, ctx);
 
-  ctx.progress('메타데이터 정리', 0.03);
+  ctx.progress(tx('cmp.001'), 0.03);
   const stripped = stripMetadata(type, src);
 
   const candidates = [];
@@ -40,10 +41,10 @@ export async function compressImage(file, options, ctx) {
   // 움직이는 이미지(APNG, 애니메이션 WebP)는 재인코딩하면 움직임이 사라지므로 메타데이터만 제거
   if (stripped.animated) {
     if (stripped.bytes) candidates.push({ kind: 'stripped', bytes: stripped.bytes, format: type, ssim: 1 });
-    return { ...finish(original, candidates, null, '움직이는 이미지라 메타데이터만 제거했습니다'), srcFormat: type, converted: false };
+    return { ...finish(original, candidates, null, tx('cmp.002')), srcFormat: type, converted: false };
   }
 
-  ctx.progress('이미지 해석', 0.06);
+  ctx.progress(tx('cmp.003'), 0.06);
   const decoded = await decodeImage(src, type, options.maxDim || 0);
   const img = decoded.img;
   const resized = decoded.resized;
@@ -60,7 +61,7 @@ export async function compressImage(file, options, ctx) {
   let note = '';
   if (format === 'png') {
     // PNG 유지: 무손실 최적화 (픽셀 그대로)
-    ctx.progress('PNG 무손실 최적화', 0.15);
+    ctx.progress(tx('cmp.004'), 0.15);
     const level = img.width * img.height > 4_000_000 ? 1 : 2;
     const usableBytes = !resized && stripped.orientation === 1;
     const input = usableBytes ? (stripped.bytes || src) : img;
@@ -71,17 +72,18 @@ export async function compressImage(file, options, ctx) {
     const report = (label, f) => ctx.progress(label, 0.12 + 0.85 * f);
     const lossy = await searchQuality(format, img, mode, target, opaque, scale, report);
     if (lossy) candidates.push({ kind: 'lossy', ...lossy, format, ...dims });
-    else note = '기준 화질을 유지하면서 더 줄일 수 없었습니다';
+    else note = tx('cmp.005');
   }
 
-  if (resized) note = note || `해상도를 ${img.width}×${img.height}로 줄였습니다`;
-  return { ...finish(original, candidates, dims, note), srcFormat: type, converted: false };
+  const reason = note;   // 원본을 유지하게 될 때 보여 줄 이유 (해상도 안내는 이유가 아님)
+  if (resized) note = note || tx('cmp.006', { width: img.width, height: img.height });
+  return { ...finish(original, candidates, dims, note, reason), srcFormat: type, converted: false };
 }
 
 /** 저장 형식 변환: 원본보다 커져도 변환 결과를 쓴다 */
 async function convertImage(src, type, format, mode, options, ctx) {
   const animated = isAnimated(type, src);
-  ctx.progress('이미지 해석', 0.06);
+  ctx.progress(tx('cmp.003'), 0.06);
   const decoded = await decodeImage(src, type, options.maxDim || 0);
   const img = decoded.img;
   const dims = { width: img.width, height: img.height, origWidth: decoded.origWidth, origHeight: decoded.origHeight };
@@ -90,9 +92,9 @@ async function convertImage(src, type, format, mode, options, ctx) {
 
   let r;
   if (format === 'png') {
-    ctx.progress('PNG 무손실 저장', 0.15);
+    ctx.progress(tx('cmp.007'), 0.15);
     const bytes = await optimisePng(img, img.width * img.height > 4_000_000 ? 1 : 2);
-    r = packResult('lossless', bytes, 'png', { ssim: 1, note: 'PNG 무손실 저장 (화질 변화 없음)' });
+    r = packResult('lossless', bytes, 'png', { ssim: 1, note: tx('cmp.008') });
   } else {
     const { target, scale } = targetFor(mode, img);
     const report = (label, f) => ctx.progress(label, 0.12 + 0.85 * f);
@@ -102,20 +104,20 @@ async function convertImage(src, type, format, mode, options, ctx) {
     } else {
       // 기준을 넘는 품질이 없으면(드묾) 가장 높은 품질로 저장
       const q = QUALITY_RANGE[format][1];
-      ctx.progress(`최고 품질로 저장 (품질 ${q})`, 0.9);
+      ctx.progress(tx('cmp.009', { q }), 0.9);
       const bytes = await encode(format, img, q, mode);
       const s = await score(format, img, bytes, opaque, scale);
       r = packResult('lossy', bytes, format, { quality: q, ssim: s.mean, ssimLow: s.low });
     }
   }
-  if (decoded.resized) r.note = [r.note, `해상도를 ${img.width}×${img.height}로 줄였습니다`].filter(Boolean).join(' · ');
+  if (decoded.resized) r.note = [r.note, tx('cmp.006', { width: img.width, height: img.height })].filter(Boolean).join(' · ');
   return {
     ...r, ...dims,
     ...convInfo(type, format, { srcSize: src.length, size: r.size, filled, bg: options.bg, animated }),
   };
 }
 
-function finish(original, candidates, dims, note) {
+function finish(original, candidates, dims, note, reason = note) {
   // 무손실 후보(메타데이터 제거, PNG 최적화)는 조금이라도 작으면 채택.
   // 손실 재인코딩은 화질을 한 번 더 깎는 일이라, 무손실 최선보다 MIN_LOSSY_GAIN 이상
   // 줄어들 때만 채택한다. (이미 최적화된 사진을 1~2% 위해 다시 깎지 않음)
@@ -129,9 +131,9 @@ function finish(original, candidates, dims, note) {
     if (c.kind === 'lossy' && c.bytes.length <= losslessSize * (1 - MIN_LOSSY_GAIN)) best = c;
   }
   if (!best) {
-    let why = '이미 충분히 최적화된 파일이라 원본을 유지했습니다';
-    if (candidates.some((c) => c.kind === 'lossy')) why = '이미 잘 압축된 파일이라 화질 보호를 위해 원본을 유지했습니다';
-    else if (note && !note.startsWith('해상도')) why = `${note} — 원본을 유지했습니다`;
+    let why = tx('cmp.010');
+    if (candidates.some((c) => c.kind === 'lossy')) why = tx('cmp.011');
+    else if (reason) why = tx('cmp.012', { reason });
     return {
       kind: 'original', size: original.size, mime: MIME[original.format], ext: EXT[original.format],
       ssim: 1, ...(dims || {}), note: why,
@@ -147,7 +149,7 @@ function finish(original, candidates, dims, note) {
     ssim: best.ssim,
     ssimLow: best.ssimLow,
     width: best.width, height: best.height, origWidth: best.origWidth, origHeight: best.origHeight,
-    note: best.kind === 'stripped' ? '메타데이터만 제거했습니다 (화질 변화 없음)'
-      : best.kind === 'lossless' ? (note || '무손실 최적화 (화질 변화 없음)') : note,
+    note: best.kind === 'stripped' ? tx('cmp.013')
+      : best.kind === 'lossless' ? (note || tx('cmp.014')) : note,
   };
 }

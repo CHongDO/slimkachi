@@ -8,6 +8,8 @@
    ※ 버전을 올릴 때는 아래 V 값과 각 encode() 인자 형태를 함께 확인.
    ============================================================ */
 
+import { t as tx } from '../../i18n/index.js';
+
 const CDN = 'https://cdn.jsdelivr.net/npm/@jsquash';
 const V = { jpeg: '1.6.0', webp: '1.5.0', avif: '2.1.1', oxipng: '2.3.0' };
 
@@ -95,7 +97,7 @@ export async function encode(format, img, quality, mode, extra = {}) {
     const m = await load('webpEnc');
     const opts = { ...WEBP_DEFAULTS, quality, use_sharp_yuv: mode === 'quality' ? 1 : 0 };
     const out = m.encode(data, width, height, opts);
-    if (!out) throw new Error('WebP 인코딩 실패');
+    if (!out) throw new Error(tx('codec.001'));
     return new Uint8Array(out);
   }
   if (format === 'avif') {
@@ -103,10 +105,10 @@ export async function encode(format, img, quality, mode, extra = {}) {
     const big = width * height > 4_000_000;
     const opts = { ...AVIF_DEFAULTS, quality, speed: big ? 8 : 6, subsample: mode === 'quality' ? 3 : 1 };
     const out = m.encode(new Uint8Array(data.buffer, data.byteOffset, data.byteLength), width, height, opts);
-    if (!out) throw new Error('AVIF 인코딩 실패');
+    if (!out) throw new Error(tx('codec.002'));
     return new Uint8Array(out);
   }
-  throw new Error(`지원하지 않는 출력 형식: ${format}`);
+  throw new Error(tx('codec.003', { format }));
 }
 
 /** PNG 무손실 최적화. bytes(PNG 파일) 또는 ImageData 를 받는다. */
@@ -123,7 +125,7 @@ export async function wasmDecode(format, bytes) {
   if (format === 'jpeg') r = (await load('jpegDec')).decode(buf, false);
   else if (format === 'webp') r = (await load('webpDec')).decode(buf);
   else if (format === 'avif') r = (await load('avifDec')).decode(buf, 8);
-  if (!r) throw new Error('이미지를 해석할 수 없습니다');
+  if (!r) throw new Error(tx('codec.004'));
   return r;
 }
 

@@ -12,6 +12,7 @@
    ============================================================ */
 
 import { searchQuality, targetFor, resizeTo, drawToCanvas } from '../../shared/image/pipeline.js';
+import { t as tx } from '../../i18n/index.js';
 
 /** 모드별 목표 해상도(ppi). 그려지는 크기 기준으로 이것의 1.5배를 넘으면 줄인다. */
 const PPI = { size: 150, balanced: 200, quality: 300 };
@@ -44,8 +45,8 @@ export async function optimiseImages(L, doc, mode, sizes, report) {
 
   for (let idx = 0; idx < todo.length; idx++) {
     const [ref, obj] = todo[idx];
-    const label = `이미지 ${idx + 1}/${todo.length}`;
-    report(`${label} 분석`, idx / todo.length);
+    const label = tx('pdfimg.001', { p: idx + 1, todoCount: todo.length });
+    report(tx('pdfimg.002', { label }), idx / todo.length);
     let plan;
     try { plan = analyse(L, ctx, obj); } catch { plan = null; }
     if (!plan) continue;
@@ -75,7 +76,7 @@ export async function optimiseImages(L, doc, mode, sizes, report) {
     const sub = (t, f) => report(`${label} ${t}`, (idx + f) / todo.length);
     let found;
     try {
-      found = await searchQuality('jpeg', img, mode, target, true, scale, (t, f) => sub('화질 맞추는 중', f), { gray });
+      found = await searchQuality('jpeg', img, mode, target, true, scale, (t, f) => sub(tx('pdfimg.003'), f), { gray });
     } catch (e) { console.warn('encode', e); continue; }
     if (!found) continue;
     // 안전장치: 새 JPEG 의 색 성분 수가 PDF 에 적힐 색공간과 맞지 않으면 바꾸지 않는다
@@ -98,7 +99,7 @@ export async function optimiseImages(L, doc, mode, sizes, report) {
     stats.before += oldSize;
     stats.after += found.bytes.length;
   }
-  report('이미지 정리 완료', 1);
+  report(tx('pdfimg.004'), 1);
   return stats;
 
   /* ---- 이 이미지를 안전하게 다시 저장할 수 있는지 판단 ---- */

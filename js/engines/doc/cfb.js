@@ -9,6 +9,8 @@
    외부 라이브러리 없이 직접 구현 (범용 라이브러리는 쓸 때 임시 스트림을 덧붙이는 경우가 있어서).
    ============================================================ */
 
+import { t as tx } from '../../i18n/index.js';
+
 const FREE = 0xffffffff, END = 0xfffffffe, FATSECT = 0xfffffffd, DIFSECT = 0xfffffffc, NOSTREAM = 0xffffffff;
 const MAXREG = 0xfffffffa;
 const SIG = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1];
@@ -16,12 +18,12 @@ const SIG = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1];
 export const isCfb = (u8) => u8.length >= 512 && SIG.every((b, i) => u8[i] === b);
 
 export function readCfb(u8) {
-  if (!isCfb(u8)) throw new Error('복합 파일 형식이 아닙니다');
+  if (!isCfb(u8)) throw new Error(tx('cfb.001'));
   const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
   const major = dv.getUint16(26, true);
   const S = 1 << dv.getUint16(30, true);
   const MS = 1 << dv.getUint16(32, true);
-  if ((S !== 512 && S !== 4096) || MS !== 64) throw new Error('지원하지 않는 복합 파일 구조입니다');
+  if ((S !== 512 && S !== 4096) || MS !== 64) throw new Error(tx('cfb.002'));
   const nFat = dv.getUint32(44, true);
   const dirStart = dv.getUint32(48, true);
   const cutoff = dv.getUint32(56, true) || 4096;
@@ -31,7 +33,7 @@ export function readCfb(u8) {
   const nSect = Math.floor((u8.length - S) / S) + (u8.length % S ? 1 : 0);
   const sectorAt = (n) => {
     const a = (n + 1) * S;
-    if (n >= MAXREG || a >= u8.length) throw new Error('복합 파일이 손상되었습니다 (섹터 범위)');
+    if (n >= MAXREG || a >= u8.length) throw new Error(tx('cfb.003'));
     return u8.subarray(a, Math.min(a + S, u8.length));
   };
 
@@ -60,7 +62,7 @@ export function readCfb(u8) {
     const out = [];
     const seen = new Set();
     for (let n = start; n < MAXREG; n = table[n]) {
-      if (seen.has(n) || n >= table.length || out.length > limit) throw new Error('복합 파일이 손상되었습니다 (체인)');
+      if (seen.has(n) || n >= table.length || out.length > limit) throw new Error(tx('cfb.004'));
       seen.add(n);
       out.push(n);
     }
@@ -76,7 +78,7 @@ export function readCfb(u8) {
       out.set(s.subarray(0, take), o);
       o += take;
     }
-    if (o < size) throw new Error('복합 파일이 손상되었습니다 (스트림 길이)');
+    if (o < size) throw new Error(tx('cfb.005'));
     return out;
   };
 
@@ -102,7 +104,7 @@ export function readCfb(u8) {
     });
   }
   const root = entries[0];
-  if (!root || root.type !== 5) throw new Error('복합 파일 루트를 찾지 못했습니다');
+  if (!root || root.type !== 5) throw new Error(tx('cfb.006'));
 
   // 미니 FAT · 미니 스트림
   let miniFat = new Uint32Array(0);
@@ -124,7 +126,7 @@ export function readCfb(u8) {
     for (const n of chain(e.start, miniFat, ministream.length / MS + 1)) {
       if (o >= e.size) break;
       const a = n * MS;
-      if (a + Math.min(MS, e.size - o) > ministream.length) throw new Error('복합 파일이 손상되었습니다 (미니 스트림)');
+      if (a + Math.min(MS, e.size - o) > ministream.length) throw new Error(tx('cfb.007'));
       const take = Math.min(MS, e.size - o);
       out.set(ministream.subarray(a, a + take), o);
       o += take;

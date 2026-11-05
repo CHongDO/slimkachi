@@ -112,6 +112,12 @@ strong, b { font-weight: 400; color: var(--text); }   /* Galmuri14 에는 굵은
 .app-header__links { display: flex; gap: var(--space-4); }
 .app-header__links a { color: var(--text-secondary); text-decoration: none; }
 .app-header__links a:hover { color: var(--text-link); text-decoration: underline; text-underline-offset: 4px; }
+/* 언어 전환 (한국어 / English / 日本語) — 지금 언어는 진하게 + 밑줄. 자동 이동은 하지 않는다 */
+.app-header__lang { display: flex; align-items: center; gap: var(--space-2); }
+.app-header__lang a { color: var(--text-secondary); text-decoration: none; }
+.app-header__lang a + a::before { content: "/"; margin-right: var(--space-2); color: var(--text-muted); }
+.app-header__lang a:hover { color: var(--text-link); }
+.app-header__lang a[aria-current="page"] { color: var(--text); text-decoration: underline; text-underline-offset: 4px; }
 
 /* ---- 본문(앱 마운트 영역) ---- */
 .app-main {
@@ -261,6 +267,8 @@ ins.adsbygoogle, .google-auto-placed {
   .brand__badge { padding: 2px var(--space-1); letter-spacing: 0; }
   .brand__name { font-size: var(--font-size-xs); margin-left: 0; }
   .app-header__links { gap: var(--space-3); }
+  /* 좁은 화면: 언어 전환은 헤더 아래 줄 오른쪽으로 */
+  .app-header__lang { order: 10; width: 100%; justify-content: flex-end; }
   .app-main { padding-top: var(--space-4); }
   .intro { padding: var(--space-4) var(--space-4) var(--space-2); margin-top: var(--space-5); }
   .app-footer { margin-bottom: calc(48px + var(--space-4)); }

@@ -10,6 +10,7 @@
    ============================================================ */
 
 import { preload } from './codecs.js';
+import { t as tx, setLang } from '../../i18n/index.js';
 
 export function serve(processFile) {
   self.onmessage = async (e) => {
@@ -17,13 +18,14 @@ export function serve(processFile) {
     if (msg.type === 'preload') { preload(msg.formats || []); return; }
     if (msg.type !== 'process') return;
     const { id, file, options } = msg;
+    await setLang(msg.lang);   // 화면 언어로 안내·진행 문구를 만든다
     const ctx = {
       progress: (stage, pct) => self.postMessage({ type: 'progress', id, stage, pct }),
       thumb: (blob) => self.postMessage({ type: 'thumb', id, blob }),
     };
     try {
       const result = await processFile(file, options || {}, ctx);
-      ctx.progress('완료', 1);
+      ctx.progress(tx('ws.057'), 1);
       const transfer = result.bytes ? [result.bytes.buffer] : [];
       self.postMessage({ type: 'done', id, result }, transfer);
     } catch (err) {

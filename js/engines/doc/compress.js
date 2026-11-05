@@ -17,6 +17,7 @@ import { patchZip } from './zip.js';
 import { writeCfb } from './cfb.js';
 import { compressImage } from '../imageCompress.js';
 import { stripMetadata } from '../../shared/image/metadata.js';
+import { t as tx } from '../../i18n/index.js';
 
 const MAX_EDGE = { size: 2000, balanced: 2560, quality: 0 };   // 0 = 줄이지 않음
 const MIN_GAIN = 0.03;
@@ -59,7 +60,7 @@ async function shrink(bytes, mode, ctx) {
 export async function compressDoc(file, options, ctx) {
   const mode = MAX_EDGE[options.mode] !== undefined ? options.mode : 'size';
   const src = new Uint8Array(await file.arrayBuffer());
-  ctx.progress('문서 구조 읽는 중', 0.03);
+  ctx.progress(tx('doc.001'), 0.03);
   const doc = await openDoc(src, file.name);
   const ext = doc.ext;
   const list = doc.images;
@@ -69,7 +70,7 @@ export async function compressDoc(file, options, ctx) {
 
   for (let i = 0; i < list.length; i++) {
     const im = list[i];
-    ctx.progress(`문서 안 사진 ${i + 1}/${list.length} 줄이는 중`, 0.05 + 0.88 * (i / Math.max(1, list.length)));
+    ctx.progress(tx('doc.002', { p: i + 1, listCount: list.length }), 0.05 + 0.88 * (i / Math.max(1, list.length)));
     let data, deflated = false;
     if (doc.container === 'zip') data = doc.read(im.key);
     else ({ data, deflated } = doc.readHwp(im.key));
@@ -86,7 +87,7 @@ export async function compressDoc(file, options, ctx) {
     data = null;   // 한 장씩 놓아준다
   }
 
-  ctx.progress('문서 다시 묶는 중', 0.95);
+  ctx.progress(tx('doc.003'), 0.95);
   let out = src;
   if (repl.size) {
     out = doc.container === 'zip'
@@ -106,11 +107,11 @@ export async function compressDoc(file, options, ctx) {
   if (!repl.size || out.length > src.length * (1 - MIN_GAIN)) {
     return {
       kind: 'original', size: src.length, mime: MIME[ext], ext, images, compare: null,
-      note: '줄일 사진이 거의 없는 문서입니다 — 원본을 그대로 유지했습니다',
+      note: tx('doc.004'),
     };
   }
   return {
     kind: 'lossy', bytes: out, size: out.length, mime: MIME[ext], ext, images, compare,
-    note: `문서 안 사진 ${compressed}장을 줄였습니다 (글자·표·서식은 그대로)`,
+    note: tx('doc.005', { compressed }),
   };
 }

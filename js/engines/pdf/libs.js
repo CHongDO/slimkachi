@@ -8,6 +8,8 @@
    PDF 파일을 처음 처리할 때만 내려받는다(사진만 다루면 받지 않음).
    ============================================================ */
 
+import { t as tx } from '../../i18n/index.js';
+
 const PDFLIB_URL = 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.esm.min.js';
 const QPDF_BASE = 'https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm@0.3.0/dist';
 
@@ -60,6 +62,6 @@ export async function runQpdf(input, args) {
   } catch (e) {
     code = typeof e?.status === 'number' ? e.status : 2;
   }
-  if (code !== 0 && code !== 3) throw new Error(`qpdf 실패 (종료 코드 ${code})`);
+  if (code !== 0 && code !== 3) throw new Error(tx('pdflib.001', { code }));
   return m.FS.readFile('/out.pdf');
 }

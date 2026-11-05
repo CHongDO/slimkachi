@@ -6,6 +6,8 @@
    함께 씁니다. 메인 스레드에서 import 하지 마세요(픽셀 루프가 무거움).
    ============================================================ */
 
+import { t as tx } from '../../i18n/index.js';
+
 import { MIME, EXT } from './metadata.js';
 import { ssim } from './ssim.js';
 import { encode, wasmDecode, QUALITY_RANGE } from './codecs.js';
@@ -68,9 +70,9 @@ export async function decodeSource(bytes, type) {
     if (type === 'jpeg' || type === 'webp' || type === 'avif') return await wasmDecode(type, bytes);
   } catch (err) {
     if (err && err.network) throw err;
-    throw Object.assign(new Error('사진을 열 수 없습니다 (파일이 손상되었을 수 있어요)'), { unsupported: !type, cause: err });
+    throw Object.assign(new Error(tx('pipe.001')), { unsupported: !type, cause: err });
   }
-  throw Object.assign(new Error('이 형식은 아직 지원하지 않습니다'), { unsupported: true });
+  throw Object.assign(new Error(tx('thumb.001')), { unsupported: true });
 }
 
 export function closeSource(src) { if (src && src.close) src.close(); }
@@ -242,7 +244,7 @@ export async function searchQuality(format, img, mode, target, opaque, scale, re
   let lo = qMin, hi = qMax, best = null;
   while (lo <= hi) {
     const q = (lo + hi) >> 1;
-    tick(`최적 화질 찾는 중 (품질 ${q})`);
+    tick(tx('pipe.002', { q }));
     const t = await trial(format, sample, q, mode, opaque, scale, extra);
     if (passes(t.score, target)) { best = { q, ...t }; hi = q - 1; }
     else lo = q + 1;
@@ -257,7 +259,7 @@ export async function searchQuality(format, img, mode, target, opaque, scale, re
   let q = best.q;
   let failed = q - 1;
   for (let attempt = 0; attempt < 3; attempt++) {
-    report(`전체 이미지 인코딩 (품질 ${q})`, 0.85 + attempt * 0.04);
+    report(tx('pipe.003', { q }), 0.85 + attempt * 0.04);
     const t = await trial(format, img, q, mode, opaque, scale, extra);
     if (passes(t.score, target)) return { bytes: t.bytes, quality: q, ssim: t.score.mean, ssimLow: t.score.low };
     if (q >= qMax) return null;
@@ -269,7 +271,7 @@ export async function searchQuality(format, img, mode, target, opaque, scale, re
   let a = failed + 1, z = qMax, found = null;
   while (a <= z) {
     const mid = (a + z) >> 1;
-    report(`전체 이미지로 다시 찾는 중 (품질 ${mid})`, 0.97);
+    report(tx('pipe.004', { mid }), 0.97);
     const t = await trial(format, img, mid, mode, opaque, scale, extra);
     if (passes(t.score, target)) { found = { q: mid, ...t }; z = mid - 1; } else a = mid + 1;
   }

@@ -11,6 +11,11 @@
   <meta name="description" content="SlimKachi(슬림까치)는 사진·PDF·문서(한글·워드·파워포인트·엑셀) 용량을 서버 업로드 없이 브라우저 안에서 무료로 줄여 주는 도구입니다. 사진 크기 조절, HEIC·BMP 형식 변환까지 화질 손실은 최소로, 용량은 최대한 줄여 드립니다.">
   <meta name="keywords" content="SlimKachi, 슬림까치, 사진 용량 줄이기, 사진 크기 줄이기, 이미지 압축, jpg 용량 줄이기, png 압축, webp 변환, heic jpg 변환, 아이폰 사진 jpg 변환, bmp png 변환, tiff 변환, gif png 변환, 사진 압축, 이미지 용량 줄이기, exif 제거, 사진 크기 조절, 이미지 리사이즈, 사진 500kb 줄이기, 사진 해상도 줄이기, pdf 용량 줄이기, pdf 압축, 스캔 pdf 줄이기, 한글 파일 용량 줄이기, hwp 용량 줄이기, hwpx 용량 줄이기, 워드 용량 줄이기, docx 용량 줄이기, ppt 용량 줄이기, 엑셀 용량 줄이기">
   <link rel="canonical" href="https://slimkachi.pages.dev/">
+  <!-- 언어별 같은 페이지 (서로 연결, 자동 이동은 하지 않음) -->
+  <link rel="alternate" hreflang="ko" href="https://slimkachi.pages.dev/">
+  <link rel="alternate" hreflang="en" href="https://slimkachi.pages.dev/en/">
+  <link rel="alternate" hreflang="ja" href="https://slimkachi.pages.dev/ja/">
+  <link rel="alternate" hreflang="x-default" href="https://slimkachi.pages.dev/">
   <meta name="robots" content="index, follow">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="alternate icon" href="assets/favicon.ico">
@@ -18,6 +23,9 @@
   <!-- ====== Open Graph ====== -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="SlimKachi">
+  <meta property="og:locale" content="ko_KR">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta property="og:locale:alternate" content="ja_JP">
   <meta property="og:title" content="SlimKachi - 사진·PDF·문서 용량 줄이기 | 업로드 없이 무료">
   <meta property="og:description" content="사진·PDF·문서(한글·워드·파워포인트·엑셀) 용량을 서버 업로드 없이 브라우저 안에서 무료로 줄입니다. 화질 손실은 최소로, 용량은 최대한.">
   <meta property="og:url" content="https://slimkachi.pages.dev/">
@@ -38,6 +46,7 @@
     "name": "SlimKachi",
     "alternateName": "슬림까치",
     "url": "https://slimkachi.pages.dev/",
+    "inLanguage": "ko",
     "applicationCategory": "MultimediaApplication",
     "operatingSystem": "Web Browser",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KRW" },
@@ -83,6 +92,11 @@
         <span class="brand__badge" aria-hidden="true">SLIM</span><span class="brand__name" aria-hidden="true">Kachi</span>
       </a>
       <span class="app-header__spacer"></span>
+      <nav class="app-header__lang" aria-label="언어 / Language">
+        <a href="./" hreflang="ko" lang="ko" aria-current="page">한국어</a>
+        <a href="en/" hreflang="en" lang="en">English</a>
+        <a href="ja/" hreflang="ja" lang="ja">日本語</a>
+      </nav>
       <div class="app-header__links">
         <a href="pages/about.html">소개</a>
         <a href="pages/features.html">기능</a>

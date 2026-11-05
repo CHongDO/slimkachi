@@ -14,6 +14,7 @@
 import { icon } from './icons.js';
 import { drawMoons } from './moon.js';
 import { initMagpie } from './magpie.js';
+import { t as tx } from './i18n/index.js';
 
 const KEY = 'ft-mode';
 const MAX_SCROLL = 1200;   // 이 이상 내려가도 배경은 더 움직이지 않음
@@ -35,7 +36,7 @@ export function initTheme() {
   const sync = () => {
     if (!btn) return;
     const night = root.dataset.mode === 'night';
-    const label = night ? '낮 모드로 바꾸기' : '밤 모드로 바꾸기';
+    const label = night ? tx('theme.001') : tx('theme.002');
     btn.setAttribute('aria-pressed', String(night));
     btn.title = label;
     btn.innerHTML = `${icon(night ? 'sun' : 'moon', 16)}<span class="sr-only">${label}</span>`;

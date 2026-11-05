@@ -5,6 +5,8 @@
    (메모리 부족 등) 그 작업만 실패 처리하고 새 워커로 계속합니다.
    ============================================================ */
 
+import { getLang } from '../i18n/index.js';
+
 export class WorkerPool {
   /**
    * @param {URL} url 워커 모듈 주소
@@ -75,7 +77,8 @@ export class WorkerPool {
       if (!slot) return;
       const job = this.queue.shift();
       slot.job = job;
-      slot.w.postMessage({ type: 'process', id: job.id, file: job.file, options: job.options });
+      // 워커는 화면 언어를 모르므로 작업마다 같이 보낸다 (안내·진행 문구를 그 언어로)
+      slot.w.postMessage({ type: 'process', id: job.id, file: job.file, options: job.options, lang: getLang() });
     }
   }
 

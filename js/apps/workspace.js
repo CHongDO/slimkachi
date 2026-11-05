@@ -19,6 +19,7 @@ import { loadCss, formatBytes, changeText, renameExt } from '../shared/util.js';
 import { WorkerPool } from '../shared/workerPool.js';
 import { SAVEABLE, autoFormat, outputFormat, FORMAT_NAME, LOSSY_SOURCES } from '../shared/formats.js';
 import { currentLimits, assess, mbText, mpText } from '../shared/limits.js';
+import { t as tx } from '../i18n/index.js';
 
 const FFLATE_URL = 'https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js';
 const WORKER_URL = new URL('./workspace/worker.js', import.meta.url);
@@ -27,10 +28,10 @@ const THUMB_URL = new URL('./workspace/thumbWorker.js', import.meta.url);
 /* ---------- 파일 종류 ---------- */
 // PDF 가 아니면 모두 '사진 후보' — 실제로 열리는지는 썸네일 워커가 확인한다
 const KINDS = {
-  image: { label: '사진', icon: 'image' },
+  image: { label: tx('ws.001'), icon: 'image' },
   pdf: { mimes: ['application/pdf'], ext: /\.pdf$/i, label: 'PDF', icon: 'pdf' },
   // 문서: 확장자로 고르고, 시그니처(ZIP·복합 파일)는 올릴 때 limits.js 가, 구조·보안은 썸네일 워커가 확인
-  doc: { ext: /\.(hwp|hwpx|docx|pptx|xlsx)$/i, label: '문서', icon: 'doc' },
+  doc: { ext: /\.(hwp|hwpx|docx|pptx|xlsx)$/i, label: tx('ws.002'), icon: 'doc' },
 };
 // 파일 고르기 창의 기본 필터 (Windows 는 HEIC·TIFF 에 MIME 이 없어 확장자도 적는다). 드래그로는 무엇이든 받는다.
 const ACCEPT = 'image/*,application/pdf,.pdf,.jpg,.jpeg,.png,.webp,.gif,.bmp,.ico,.avif,.heic,.heif,.tif,.tiff,.hwp,.hwpx,.docx,.pptx,.xlsx';
@@ -41,9 +42,9 @@ const AVIF_PROBE = 'AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAA
 
 // 목록 보기 필터 (보기만 바뀌고 파일은 그대로). PDF 는 '문서'와 '전체'에. 주소 #photo · #doc 로도 지정
 const FILTERS = [
-  { id: 'all', label: '전체', hash: '' },
-  { id: 'photo', label: '사진', hash: '#photo' },
-  { id: 'doc', label: '문서', hash: '#doc' },
+  { id: 'all', label: tx('ws.003'), hash: '' },
+  { id: 'photo', label: tx('ws.001'), hash: '#photo' },
+  { id: 'doc', label: tx('ws.002'), hash: '#doc' },
 ];
 const inFilter = (kind, f) => f === 'all' || (f === 'photo' ? kind === 'image' : kind !== 'image');
 const filterFromHash = () => (FILTERS.find((f) => f.hash && f.hash === location.hash) || FILTERS[0]).id;
@@ -61,7 +62,7 @@ function srcLabel(item) {
   const t = item.info.type;
   if (t === 'heic' && extOf(item.file.name) === 'heif') return 'HEIF';
   if (t && FORMAT_NAME[t]) return FORMAT_NAME[t];
-  return extOf(item.file.name).toUpperCase() || '사진';
+  return extOf(item.file.name).toUpperCase() || tx('ws.001');
 }
 /** 실제로 저장될 형식 (원본 유지인데 원본 형식으로 못 저장하면 자동 형식) */
 const effFormat = (item, s = item.settings) => outputFormat(s.format, item.info.type);
@@ -69,25 +70,25 @@ const canKeep = (item) => !item.info.type || SAVEABLE.includes(item.info.type);
 
 /* ---------- 설정 정의 ---------- */
 const IMAGE_MODES = [
-  { id: 'size', label: '용량 우선', hint: '눈에 띄지 않는 선에서 최대한 줄입니다' },
-  { id: 'balanced', label: '균형', hint: '용량과 화질의 중간' },
-  { id: 'quality', label: '화질 우선', hint: '원본과 거의 구별되지 않는 화질 유지' },
+  { id: 'size', label: tx('ws.004'), hint: tx('ws.005') },
+  { id: 'balanced', label: tx('ws.006'), hint: tx('ws.007') },
+  { id: 'quality', label: tx('ws.008'), hint: tx('ws.009') },
 ];
 const PDF_MODES = [
-  { id: 'size', label: '용량 우선', hint: 'PDF 속 사진을 화면·일반 인쇄에 충분한 해상도(150ppi)로 맞추고 최대한 줄입니다' },
-  { id: 'balanced', label: '균형', hint: '사진을 200ppi까지 유지하며 용량과 화질의 중간으로 줄입니다' },
-  { id: 'quality', label: '화질 우선', hint: '사진을 300ppi까지 유지하고, 확대해도 원본과 거의 같은 화질로 줄입니다' },
+  { id: 'size', label: tx('ws.004'), hint: tx('ws.010') },
+  { id: 'balanced', label: tx('ws.006'), hint: tx('ws.011') },
+  { id: 'quality', label: tx('ws.008'), hint: tx('ws.012') },
 ];
 const DOC_MODES = [
-  { id: 'size', label: '용량 우선', hint: '문서 안 사진을 긴 변 2000px까지 줄이고 눈에 띄지 않는 선에서 최대한 압축합니다' },
-  { id: 'balanced', label: '균형', hint: '사진을 긴 변 2560px까지 유지하며 용량과 화질의 중간으로 줄입니다' },
-  { id: 'quality', label: '화질 우선', hint: '사진 해상도는 그대로 두고 원본과 거의 구별되지 않는 화질로 줄입니다' },
+  { id: 'size', label: tx('ws.004'), hint: tx('ws.013') },
+  { id: 'balanced', label: tx('ws.006'), hint: tx('ws.014') },
+  { id: 'quality', label: tx('ws.008'), hint: tx('ws.015') },
 ];
 const RESIZES = [
-  { id: 'none', label: '안 함', hint: '해상도는 그대로 두고 용량만 줄입니다.' },
-  { id: 'percent', label: '비율(%)', hint: '가로·세로를 같은 비율로 줄입니다.' },
-  { id: 'pixels', label: '픽셀', hint: '비율 유지가 켜져 있으면 입력한 가로·세로 칸 안에 맞춰 줄입니다. 한쪽만 입력해도 됩니다.' },
-  { id: 'target', label: '목표 용량', hint: '먼저 화질을 낮춰 보고, 그래도 크면 해상도를 줄여 목표 이하로 맞춥니다. (1KB = 1000바이트로 여유 있게 계산)' },
+  { id: 'none', label: tx('ws.016'), hint: tx('ws.017') },
+  { id: 'percent', label: tx('ws.018'), hint: tx('ws.019') },
+  { id: 'pixels', label: tx('ws.020'), hint: tx('ws.021') },
+  { id: 'target', label: tx('ws.022'), hint: tx('ws.023') },
 ];
 const PERCENTS = [75, 50, 33, 25];
 const PRESETS = [
@@ -102,9 +103,9 @@ const TARGET_PRESETS = [
   { kb: 2000, label: '2MB' },
 ];
 const FORMATS = [
-  { id: 'same', label: '원본 유지' },
+  { id: 'same', label: tx('ws.024') },
   { id: 'jpeg', label: 'JPG' },
-  { id: 'png', label: 'PNG (무손실)' },
+  { id: 'png', label: tx('ws.025') },
   { id: 'webp', label: 'WebP' },
   { id: 'avif', label: 'AVIF' },   // 이 브라우저가 AVIF 를 열 수 있을 때만 보인다
 ];
@@ -141,11 +142,11 @@ function toOptions(item, s = item.settings) {
 /** 설정 확인: { text, block } — block 이면 적용 불가 */
 function checkSettings(kind, s) {
   if (kind !== 'image') return null;
-  if (s.resize === 'percent' && num(s.percent) > 100) return { text: '원본보다 크게 늘릴 수는 없어 100%로 처리합니다.', block: false };
-  if (s.resize === 'percent' && !int(s.percent)) return { text: '비율을 1~100 사이로 입력해 주세요.', block: true };
-  if (s.resize === 'pixels' && !int(s.width) && !int(s.height)) return { text: '가로나 세로 중 하나는 입력해 주세요.', block: true };
-  if (s.resize === 'target' && !targetBytes(s)) return { text: '목표 용량을 입력해 주세요.', block: true };
-  if (s.resize === 'target' && targetBytes(s) < MIN_TARGET) return { text: '목표 용량은 10KB 이상으로 정해 주세요.', block: true };
+  if (s.resize === 'percent' && num(s.percent) > 100) return { text: tx('ws.026'), block: false };
+  if (s.resize === 'percent' && !int(s.percent)) return { text: tx('ws.027'), block: true };
+  if (s.resize === 'pixels' && !int(s.width) && !int(s.height)) return { text: tx('ws.028'), block: true };
+  if (s.resize === 'target' && !targetBytes(s)) return { text: tx('ws.029'), block: true };
+  if (s.resize === 'target' && targetBytes(s) < MIN_TARGET) return { text: tx('ws.030'), block: true };
   return null;
 }
 
@@ -166,7 +167,7 @@ const chip = (attrs, label) => `<button type="button" class="ws-chip" aria-press
 
 export default {
   id: 'workspace',
-  title: '작업실',
+  title: tx('ws.031'),
   icon: icon('logo', 16),
 
   mount(container) {
@@ -255,17 +256,17 @@ export default {
         if (kind === 'doc' && r && r.sigError) {
           excluded.push({ file, why: 'docsig', text: r.sigError });
         } else if (kind === 'doc' && r && r.risk > lim.doc) {
-          excluded.push({ file, why: 'doc', text: `문서 용량이 너무 큽니다 (최대 ${mbText(lim.maxDocFile)})` });
+          excluded.push({ file, why: 'doc', text: tx('ws.032', { p: mbText(lim.maxDocFile) }) });
         } else if (kind === 'pdf' && r && r.risk > lim.pdf) {
-          excluded.push({ file, why: 'pdf', text: `PDF 용량이 너무 큽니다 (최대 ${mbText(lim.maxPdfFile)})` });
+          excluded.push({ file, why: 'pdf', text: tx('ws.033', { p: mbText(lim.maxPdfFile) }) });
         } else if (kind === 'image' && r && r.risk > lim.photo) {
           excluded.push(r.byHeader
-            ? { file, why: 'photo', text: `해상도(${r.width}×${r.height}, ${mpText(r.width * r.height)})가 너무 높아 이 기기에서 처리 중 멈출 수 있습니다 (최대 약 ${mpText(lim.maxPixels)})` }
-            : { file, why: 'photo', text: `사진 파일이 너무 커서 이 기기에서 처리 중 멈출 수 있습니다 (최대 약 ${mbText(lim.maxPhotoFile)})` });
+            ? { file, why: 'photo', text: tx('ws.034', { width: r.width, height: r.height, p: mpText(r.width * r.height), p1: mpText(lim.maxPixels) }) }
+            : { file, why: 'photo', text: tx('ws.035', { p: mbText(lim.maxPhotoFile) }) });
         } else if (count + 1 > lim.count) {
-          excluded.push({ file, why: 'list', text: `한 번에 올릴 수 있는 개수(${lim.count}개)를 넘었습니다` });
+          excluded.push({ file, why: 'list', text: tx('ws.036', { count: lim.count }) });
         } else if (total + file.size > lim.total) {
-          excluded.push({ file, why: 'list', text: `목록 전체 용량(${mbText(lim.total)})을 넘었습니다` });
+          excluded.push({ file, why: 'list', text: tx('ws.037', { p: mbText(lim.total) }) });
         } else {
           count++;
           total += file.size;
@@ -310,11 +311,11 @@ export default {
     const modal = $('.ws-modal');
     let modalReturn = null;
     const FIXES = {
-      photo: '사진 크기를 줄여서 다시 올려 주세요. (휴대폰·사진 앱의 크기 조절이나 다른 기기를 이용해 보세요)',
-      pdf: 'PDF를 여러 개로 나누어 다시 올려 주세요.',
-      doc: '문서를 여러 개로 나누어 다시 올려 주세요.',
-      docsig: '한글·오피스에서 문서를 연 뒤 HWP·HWPX·DOCX·PPTX·XLSX 형식으로 다시 저장해 올려 주세요.',
-      list: '먼저 올린 파일을 내보낸 뒤 목록을 비우고 다시 올려 주세요.',
+      photo: tx('ws.038'),
+      pdf: tx('ws.039'),
+      doc: tx('ws.040'),
+      docsig: tx('ws.041'),
+      list: tx('ws.042'),
     };
     function showExcluded(excluded, addedCount) {
       const ul = modal.querySelector('.ws-modal__list');
@@ -329,8 +330,8 @@ export default {
         ul.append(li);
       }
       modal.querySelector('.ws-modal__lead').textContent = addedCount
-        ? `${excluded.length}개 파일은 목록에 넣지 않았고, 나머지 ${addedCount}개는 정상적으로 추가했습니다.`
-        : `${excluded.length}개 파일을 목록에 넣지 않았습니다.`;
+        ? tx('ws.043', { excludedCount: excluded.length, addedCount })
+        : tx('ws.044', { excludedCount: excluded.length });
       const whys = [...new Set(excluded.map((x) => x.why))];
       modal.querySelector('.ws-modal__fix').textContent = whys.map((w) => FIXES[w]).join(' ');
       modalReturn = document.activeElement;
@@ -363,11 +364,11 @@ export default {
     function reject(item, code) {
       (rejected[code] || rejected.broken).push(item.file.name);
       removeItem(item.id);
-      const names = (arr) => arr.slice(0, 3).join(', ') + (arr.length > 3 ? ` 외 ${arr.length - 3}개` : '');
+      const names = (arr) => arr.slice(0, 3).join(', ') + (arr.length > 3 ? tx('ws.045', { p: arr.length - 3 }) : '');
       const lines = [];
-      if (rejected.unsupported.length) lines.push(`이 형식은 아직 지원하지 않습니다 (지원: ${SUPPORTED_TEXT}…): ${names(rejected.unsupported)}`);
-      if (rejected.broken.length) lines.push(`파일을 열 수 없어 제외했습니다 (손상되었을 수 있어요): ${names(rejected.broken)}`);
-      if (rejected.network.length) lines.push(`변환 도구를 내려받지 못해 제외했습니다. 인터넷 연결을 확인한 뒤 다시 올려 주세요: ${names(rejected.network)}`);
+      if (rejected.unsupported.length) lines.push(tx('ws.046', { SUPPORTED_TEXT, p: names(rejected.unsupported) }));
+      if (rejected.broken.length) lines.push(tx('ws.047', { p: names(rejected.broken) }));
+      if (rejected.network.length) lines.push(tx('ws.048', { p: names(rejected.network) }));
       dropMsg.textContent = lines.join(' / ');
     }
 
@@ -485,7 +486,7 @@ export default {
       jobs.set(item.job, item);
       item.status = 'queued';
       item.pct = 0;
-      item.stage = '처리 대기';
+      item.stage = tx('ws.049');
       pool.add({ id: item.job, file: item.file, options });
     }
 
@@ -534,7 +535,7 @@ export default {
       } else {
         item.status = 'error';
         item.notice = !!msg.notice;
-        item.stage = msg.message || '처리 중 오류가 발생했습니다';
+        item.stage = msg.message || tx('ws.050');
       }
       afterChange(item);
     }
@@ -546,9 +547,9 @@ export default {
       item.job = null;
       item.status = 'error';
       item.stage = item.kind === 'image'
-        ? '처리 중 문제가 생겼습니다(메모리 부족일 수 있어요). 아주 큰 사진이면 크기 조정을 함께 써 보세요.'
-        : item.kind === 'doc' ? '처리 중 문제가 생겼습니다(메모리 부족일 수 있어요). 다른 탭을 닫고 다시 시도해 보세요.'
-        : '처리 중 문제가 생겼습니다(메모리 부족일 수 있어요). 다른 탭을 닫고 다시 시도해 보세요.';
+        ? tx('ws.051')
+        : item.kind === 'doc' ? tx('ws.052')
+        : tx('ws.052');
       afterChange(item);
     }
 
@@ -575,8 +576,8 @@ export default {
           </span>
         </button>
         <div class="ws-item__actions">
-          <a class="btn btn--icon" data-act="download" title="이 파일 받기">${icon('download', 18)}<span class="sr-only">이 파일 받기</span></a>
-          <button type="button" class="btn btn--icon" data-act="remove" title="목록에서 삭제">${icon('close', 18)}<span class="sr-only">목록에서 삭제</span></button>
+          <a class="btn btn--icon" data-act="download" title="${tx('ws.053')}">${icon('download', 18)}<span class="sr-only">${tx('ws.053')}</span></a>
+          <button type="button" class="btn btn--icon" data-act="remove" title="${tx('ws.054')}">${icon('close', 18)}<span class="sr-only">${tx('ws.054')}</span></button>
         </div>`;
       li.querySelector('.ws-item__name').textContent = item.file.name;
       li.querySelector('.ws-item__name').title = item.file.name;
@@ -586,13 +587,13 @@ export default {
     }
 
     function statusOf(item) {
-      if (item.probing) return { text: '형식 확인 중', tone: 'busy' };
+      if (item.probing) return { text: tx('ws.055'), tone: 'busy' };
       switch (item.status) {
-        case 'queued': return { text: '처리 대기', tone: 'busy' };
-        case 'working': return { text: `처리 중 ${Math.round(item.pct * 100)}%`, tone: 'busy' };
-        case 'done': return isKept(item) ? { text: '원본 유지', tone: 'kept' } : { text: '완료', tone: 'good' };
-        case 'error': return item.notice ? { text: '처리 불가', tone: 'warn' } : { text: '오류', tone: 'danger' };
-        default: return { text: '대기', tone: 'muted' };
+        case 'queued': return { text: tx('ws.049'), tone: 'busy' };
+        case 'working': return { text: tx('ws.056', { p: Math.round(item.pct * 100) }), tone: 'busy' };
+        case 'done': return isKept(item) ? { text: tx('ws.024'), tone: 'kept' } : { text: tx('ws.057'), tone: 'good' };
+        case 'error': return item.notice ? { text: tx('ws.058'), tone: 'warn' } : { text: tx('ws.059'), tone: 'danger' };
+        default: return { text: tx('ws.060'), tone: 'muted' };
       }
     }
     const isDirty = (item) => !!item.applied && keyOf(toOptions(item)) !== keyOf(item.applied);
@@ -639,14 +640,14 @@ export default {
       if (isDirty(item)) {
         const d = document.createElement('span');
         d.className = 'ws-item__dirty';
-        d.textContent = '설정 바뀜';
+        d.textContent = tx('ws.061');
         out.append(d);
       }
       el.querySelector('.ws-progress').hidden = !(item.status === 'working' || item.status === 'queued');
       el.querySelector('.ws-tag').textContent = srcLabel(item);
       el.querySelector('.ws-progress span').style.width = gauge(item.pct);
-      const label = item.info.width ? `${item.info.width}×${item.info.height}` : item.info.pages ? `${item.info.pages}쪽`
-        : item.kind === 'doc' && item.info.images !== undefined ? `사진 ${item.info.images}장` : '';
+      const label = item.info.width ? `${item.info.width}×${item.info.height}` : item.info.pages ? tx('ws.062', { pages: item.info.pages })
+        : item.kind === 'doc' && item.info.images !== undefined ? tx('ws.063', { images: item.info.images }) : '';
       el.querySelector('.ws-item__orig').textContent = [formatBytes(item.file.size), label].filter(Boolean).join(' · ');
       const dl = el.querySelector('[data-act="download"]');
       if (item.status === 'done' && r) {
@@ -721,7 +722,7 @@ export default {
       const none = state.items.length > 0 && counts[filter] === 0;
       const msg = $('.ws-list__filtered');
       msg.hidden = !none;
-      msg.textContent = none ? `${FILTERS.find((x) => x.id === filter).label} 파일이 없습니다. [전체]를 누르면 올린 파일이 모두 보입니다.` : '';
+      msg.textContent = none ? tx('ws.064', { p: FILTERS.find((x) => x.id === filter).label }) : '';
     }
     filterEl.addEventListener('click', (e) => {
       const b = e.target.closest('[data-filter]');
@@ -762,7 +763,7 @@ export default {
 
     $('[data-act="clear"]').addEventListener('click', () => {
       if (!state.items.length) return;
-      if (unsavedCount() && !confirm('내보내지 않은 결과가 있습니다. 모두 지울까요?')) return;
+      if (unsavedCount() && !confirm(tx('ws.065'))) return;
       [...state.items].forEach((it) => removeItem(it.id));
     });
 
@@ -809,8 +810,8 @@ export default {
       const can = canKeep(item);
       const keepOpt = sel.querySelector('option[value="same"]');
       keepOpt.disabled = !can;
-      keepOpt.textContent = !item.info.type ? '원본 유지'
-        : can ? `원본 유지 (${srcLabel(item)})` : `원본 유지 (${srcLabel(item)}는 저장 불가)`;
+      keepOpt.textContent = !item.info.type ? tx('ws.024')
+        : can ? tx('ws.066', { p: srcLabel(item) }) : tx('ws.067', { p: srcLabel(item) });
       const avifOpt = sel.querySelector('option[value="avif"]');
       avifOpt.hidden = avifOpt.disabled = !avifOk;
       if (s.format === 'same' && !can) s.format = autoFormat(item.info.type);
@@ -843,20 +844,20 @@ export default {
       const eff = effFormat(item, s);
       const lines = [];
       if (t && !SAVEABLE.includes(t)) {
-        if (t === 'heic') lines.push(`${name}는 많은 기기·사이트에서 열리지 않아 원본 형식으로 저장할 수 없습니다. 기본은 어디서나 열리는 JPG입니다.`);
-        else if (t === 'avif') lines.push('AVIF는 원본 형식 그대로 저장하지 않습니다. 기본은 어디서나 열리는 JPG입니다.');
-        else if (t === 'bmp' || t === 'tiff') lines.push(`${name}는 압축이 없거나 약한 형식이라 원본 형식으로 저장하지 않습니다. 기본은 화질이 그대로인 무손실 PNG입니다.`);
-        else lines.push(`${name}는 원본 형식으로 저장할 수 없어 기본으로 무손실 PNG로 바꿉니다.`);
+        if (t === 'heic') lines.push(tx('ws.068', { name }));
+        else if (t === 'avif') lines.push(tx('ws.069'));
+        else if (t === 'bmp' || t === 'tiff') lines.push(tx('ws.070', { name }));
+        else lines.push(tx('ws.071', { name }));
       }
       if (item.info.animated && (t === 'gif' || eff !== t)) {
-        lines.push(t === 'gif' ? '움직이는 GIF는 첫 장면만 저장됩니다.' : '움직이는 이미지는 형식을 바꾸면 첫 장면만 저장됩니다.');
+        lines.push(t === 'gif' ? tx('ws.072') : tx('ws.073'));
       }
       if (LOSSY_SOURCES.includes(t) && eff === 'png') {
-        lines.push('화질은 그대로이고 용량은 커질 수 있습니다(이미 줄어든 화질은 복원되지 않습니다).');
+        lines.push(tx('ws.074'));
       } else if (t && SAVEABLE.includes(t) && eff !== t) {
-        lines.push('형식을 바꾸면 결과가 원본보다 커도 바꾼 형식으로 저장합니다.');
+        lines.push(tx('ws.075'));
       }
-      if (eff === 'avif') lines.push('AVIF는 저장에 시간이 더 걸리고, 오래된 기기에서는 열리지 않을 수 있습니다.');
+      if (eff === 'avif') lines.push(tx('ws.076'));
       return lines.join(' ');
     }
     function syncImage(s) {
@@ -867,8 +868,8 @@ export default {
       const modeField = imgSet.querySelector('.ws-mode');
       modeField.disabled = isTarget || isPng;
       modeField.querySelector('.ws-hint').textContent = isTarget
-        ? '목표 용량 방식은 목표에 맞추는 것이 우선이라 용량 모드를 쓰지 않습니다.'
-        : isPng ? 'PNG는 화질 손실 없는 무손실 최적화만 해서 용량 모드를 쓰지 않습니다.'
+        ? tx('ws.077')
+        : isPng ? tx('ws.078')
         : IMAGE_MODES.find((m) => m.id === s.mode).hint;
       if (item) {
         imgSet.querySelector('.ws-format-hint').textContent = formatHints(item, s);
@@ -895,12 +896,12 @@ export default {
       docSet.querySelectorAll('input[name="ws-mode-doc"]').forEach((r) => { r.checked = r.value === s.mode; });
       docSet.querySelector('.ws-hint').textContent = DOC_MODES.find((m) => m.id === s.mode).hint;
       const cnt = docSet.querySelector('.ws-doc__count');
-      if (!item || item.probing) cnt.textContent = '문서 안 사진을 세는 중…';
+      if (!item || item.probing) cnt.textContent = tx('ws.079');
       else if (item.info.secure) cnt.textContent = item.info.secure;
       else {
         const n = item.info.images || 0, m = item.info.compressible || 0;
-        cnt.textContent = n === 0 ? '문서 안 사진 0장 — 줄일 사진이 없는 문서입니다'
-          : `문서 안 사진 ${n}장` + (m < n ? ` (그중 줄일 수 있는 JPG·PNG ${m}장)` : '');
+        cnt.textContent = n === 0 ? tx('ws.080')
+          : tx('ws.081', { n }) + (m < n ? tx('ws.082', { m }) : '');
       }
       cnt.classList.toggle('ws-hint--warn', !!(item && item.info.secure));
     }
@@ -957,22 +958,22 @@ export default {
       const chk = checkSettings(item.kind, item.settings);
       const dirty = isDirty(item);
       const busy = item.status === 'queued' || item.status === 'working';
-      let label = '적용';
+      let label = tx('ws.083');
       let disabled = !!(chk && chk.block);
-      if (item.probing) { label = '형식 확인 중…'; disabled = true; }
-      else if (item.info.secure) { label = '처리할 수 없는 문서'; disabled = true; }
-      else if (item.applied && (dirty || item.status === 'error')) label = '다시 적용';
-      else if (busy) { label = '처리 중…'; disabled = true; }
-      else if (item.status === 'done') { label = '적용됨'; disabled = true; }
+      if (item.probing) { label = tx('ws.084'); disabled = true; }
+      else if (item.info.secure) { label = tx('ws.085'); disabled = true; }
+      else if (item.applied && (dirty || item.status === 'error')) label = tx('ws.086');
+      else if (busy) { label = tx('ws.087'); disabled = true; }
+      else if (item.status === 'done') { label = tx('ws.088'); disabled = true; }
       applyBtn.querySelector('span').textContent = label;
       applyBtn.disabled = disabled;
       revertBtn.disabled = !item.applied;
       setMsg.textContent = dirty
-        ? (busy ? '설정이 바뀌었어요. 다시 적용하면 처리 중인 작업을 멈추고 새로 시작합니다.' : '설정이 바뀌었어요. [다시 적용]을 누르면 결과를 덮어씁니다.')
+        ? (busy ? tx('ws.089') : tx('ws.090'))
         : '';
       const same = state.items.filter((it) => it.kind === item.kind && !it.info.secure);   // 처리 못 하는 보안 문서는 빼고 셈
       applyAllBtn.hidden = same.length < 2;
-      applyAllBtn.querySelector('span').textContent = `같은 종류 전체에 이 설정 적용 (${KINDS[item.kind].label} ${same.length}개)`;
+      applyAllBtn.querySelector('span').textContent = tx('ws.091', { p: KINDS[item.kind].label, sameCount: same.length });
       applyAllBtn.disabled = !!(chk && chk.block);
     }
 
@@ -1005,7 +1006,7 @@ export default {
       renderSettings();
       renderView();
       renderSummary();
-      setMsg.textContent = n ? `${n}개 파일을 차례로 처리합니다.` : '모두 이미 이 설정으로 처리되어 있습니다.';
+      setMsg.textContent = n ? tx('ws.092', { n }) : tx('ws.093');
     });
 
     /* ===================== 결과 확인 (오른쪽) ===================== */
@@ -1074,7 +1075,7 @@ export default {
       bar.hidden = !busy;
       bar.firstElementChild.style.width = gauge(item.pct);
       const text = statusBox.querySelector('.ws-view__msg');
-      if (item.status === 'queued') text.textContent = '앞의 파일을 처리한 뒤 시작합니다. (한 번에 한 파일씩 처리)';
+      if (item.status === 'queued') text.textContent = tx('ws.094');
       else if (item.status === 'working') text.textContent = `${item.stage} · ${Math.round(item.pct * 100)}%`;
     }
 
@@ -1094,12 +1095,12 @@ export default {
       statusBox.dataset.tone = item.status === 'error' ? (item.notice ? 'warn' : 'danger') : ready ? 'good' : 'muted';
       const msg = statusBox.querySelector('.ws-view__msg');
       if (item.status === 'idle') msg.textContent = item.kind === 'doc'
-        ? '왼쪽에서 설정한 뒤 [적용]을 눌러주세요. 문서 안 사진만 줄이고 글자·표·서식은 그대로 둡니다.'
-        : '왼쪽에서 설정한 뒤 [적용]을 눌러주세요. 지금은 원본 미리보기입니다.';
+        ? tx('ws.095')
+        : tx('ws.096');
       else if (item.status === 'error') msg.textContent = item.stage;
-      else if (ready) msg.textContent = r.kind === 'original' ? r.note || '원본을 그대로 유지했습니다.'
-        : item.kind === 'doc' ? '처리 완료 — 결과 문서를 한글·오피스에서 열어 확인해 주세요. 원본은 따로 보관하세요.'
-        : '처리 완료 — 슬라이더를 움직여 원본과 비교해 보세요.';
+      else if (ready) msg.textContent = r.kind === 'original' ? r.note || tx('ws.097')
+        : item.kind === 'doc' ? tx('ws.098')
+        : tx('ws.099');
       renderProgress(item);
 
       renderStats(item);
@@ -1117,8 +1118,8 @@ export default {
 
       // 그림
       cmp.classList.toggle('is-pending', !changed);
-      $('.ws-cmp__caption').textContent = item.kind === 'pdf' ? '첫 페이지'
-        : item.kind === 'doc' && r && r.compare ? `문서 안 가장 큰 사진(${r.compare.name}) 전후 · ${formatBytes(r.compare.beforeSize)} → ${formatBytes(r.compare.afterSize)}` : '';
+      $('.ws-cmp__caption').textContent = item.kind === 'pdf' ? tx('ws.100')
+        : item.kind === 'doc' && r && r.compare ? tx('ws.101', { name: r.compare.name, p: formatBytes(r.compare.beforeSize), p1: formatBytes(r.compare.afterSize) }) : '';
       setSplit(50);
       cmp.classList.add('is-loading');
       const before = await getPreview(item, 'before');
@@ -1129,10 +1130,10 @@ export default {
       if (before) beforeImg.src = before.url; else beforeImg.removeAttribute('src');
       if (after) afterImg.src = after.url; else afterImg.removeAttribute('src');
       $('.ws-cmp__noimg').textContent = item.kind === 'pdf'
-        ? (item.info.previewFailed ? '이 PDF는 미리보기를 만들 수 없습니다.' : '첫 페이지 그리는 중…')
+        ? (item.info.previewFailed ? tx('ws.102') : tx('ws.103'))
         : item.kind === 'doc'
-          ? (ready ? '줄인 사진이 없어 비교할 그림이 없습니다.' : '문서는 미리보기가 없습니다. 적용하면 문서 안 가장 큰 사진 하나의 전후를 여기서 비교해 보여 드립니다.')
-          : '미리보기를 만들 수 없습니다.';
+          ? (ready ? tx('ws.104') : tx('ws.105'))
+          : tx('ws.106');
       zoomWidth = (after && after.width) || (before && before.width) || 0;
       applyZoom();
     }
@@ -1157,37 +1158,37 @@ export default {
       const ow = (r && r.origWidth) || item.info.width;
       const oh = (r && r.origHeight) || item.info.height;
       if (item.kind === 'image') {
-        row('해상도', ow ? `${ow}×${oh}` : '—', r && r.width ? `${r.width}×${r.height}` : ow ? `${ow}×${oh}` : '—');
+        row(tx('ws.107'), ow ? `${ow}×${oh}` : '—', r && r.width ? `${r.width}×${r.height}` : ow ? `${ow}×${oh}` : '—');
       } else if (item.kind === 'doc') {
         const n = item.info.images;
-        row('사진', n !== undefined ? `${n}장` : '—', r && r.images ? `${r.images.compressed}장 줄임` : '—');
+        row(tx('ws.001'), n !== undefined ? tx('ws.108', { n }) : '—', r && r.images ? tx('ws.109', { compressed: r.images.compressed }) : '—');
       } else {
         const pages = (r && r.pages) || item.info.pages;
-        row('쪽수', pages ? `${pages}쪽` : '—', pages ? `${pages}쪽` : '—');
+        row(tx('ws.110'), pages ? tx('ws.062', { pages }) : '—', pages ? tx('ws.062', { pages }) : '—');
       }
-      row('형식', srcLabel(item), r ? RESULT_LABEL[r.ext] || r.ext.toUpperCase() : '');
-      row('용량', formatBytes(item.file.size), r ? formatBytes(r.size) : '');
+      row(tx('ws.111'), srcLabel(item), r ? RESULT_LABEL[r.ext] || r.ext.toUpperCase() : '');
+      row(tx('ws.112'), formatBytes(item.file.size), r ? formatBytes(r.size) : '');
 
       const pct = $('.ws-view__pct');
-      pct.textContent = ready ? (r.kind === 'original' ? '원본 유지' : changeText(item.file.size, r.size)) : '';
+      pct.textContent = ready ? (r.kind === 'original' ? tx('ws.024') : changeText(item.file.size, r.size)) : '';
       pct.className = `ws-badge ws-view__pct ws-badge--${ready && r.warn ? 'warn' : ready && r.size < item.file.size ? 'good' : 'muted'}`;
       $('.ws-view__pctline').hidden = !ready;
-      $('.ws-view__pctlabel').textContent = ready && r.kind === 'original' ? '결과' : ready && r.size > item.file.size ? '용량 변화' : '감소율';
+      $('.ws-view__pctlabel').textContent = ready && r.kind === 'original' ? tx('ws.113') : ready && r.size > item.file.size ? tx('ws.114') : tx('ws.115');
 
       const bits = [];
       if (ready) {
-        if (r.targetBytes) bits.push(r.size <= r.targetBytes ? `목표 ${targetLabel(r.targetBytes)} 이하 ✓` : `목표 ${targetLabel(r.targetBytes)} 초과`);
-        if (r.kind === 'lossy' && item.kind === 'image' && r.ssim) bits.push(`원본과 유사도 ${(r.ssim * 100).toFixed(1)}%`);
+        if (r.targetBytes) bits.push(r.size <= r.targetBytes ? tx('ws.116', { p: targetLabel(r.targetBytes) }) : tx('ws.117', { p: targetLabel(r.targetBytes) }));
+        if (r.kind === 'lossy' && item.kind === 'image' && r.ssim) bits.push(tx('ws.118', { p: (r.ssim * 100).toFixed(1) }));
         if (r.note && r.kind !== 'original') bits.push(r.note);
-        if (r.firstFrame) bits.push(item.info.type === 'gif' ? '움직이는 GIF는 첫 장면만 저장했습니다' : '움직이는 이미지라 첫 장면만 저장했습니다');
+        if (r.firstFrame) bits.push(item.info.type === 'gif' ? tx('ws.119') : tx('ws.120'));
         if (r.filled) {
           bits.push(r.filled.toLowerCase() === DEFAULTS.image.bg
-            ? 'JPG는 투명 배경을 지원하지 않아 흰색으로 채웠습니다'
-            : `JPG는 투명 배경을 지원하지 않아 고른 배경색(${r.filled})으로 채웠습니다`);
+            ? tx('ws.121')
+            : tx('ws.122', { filled: r.filled }));
         }
-        if (r.grew) bits.push('형식 변환으로 용량이 늘었습니다');
+        if (r.grew) bits.push(tx('ws.123'));
         if (r.warn) bits.push(r.warn);
-        if (item.kind === 'doc') bits.push('결과 문서를 한글·오피스에서 열어 확인해 주세요', '원본은 따로 보관하세요');
+        if (item.kind === 'doc') bits.push(tx('ws.124'), tx('ws.125'));
       }
       const note = $('.ws-view__note');
       note.textContent = bits.join(' · ');
@@ -1210,12 +1211,12 @@ export default {
       $('.ws-list__empty').hidden = total > 0;
       drop.classList.toggle('is-compact', total > 0);
       // 원본 유지 개수는 내보내기 버튼 아래 안내에 (여기 붙이면 좁은 패널에서 제목이 두 줄로 밀림)
-      $('.ws-list__count').textContent = total ? `${total}개 · 완료 ${exportable.length}개` : '';
+      $('.ws-list__count').textContent = total ? tx('ws.126', { total, exportableCount: exportable.length }) : '';
       const exp = $('[data-act="export"]');
       exp.disabled = exportable.length === 0;
-      exp.querySelector('span').textContent = exportable.length ? `전체 내보내기 (${exportable.length})` : '전체 내보내기';
+      exp.querySelector('span').textContent = exportable.length ? tx('ws.127', { exportableCount: exportable.length }) : tx('ws.128');
       const keptNote = $('.ws-export__kept');
-      keptNote.textContent = kept.length ? `원본 유지 ${kept.length}개는 줄일 수 없어 제외했습니다` : '';
+      keptNote.textContent = kept.length ? tx('ws.129', { keptCount: kept.length }) : '';
       keptNote.hidden = !kept.length;
       $('[data-act="clear"]').hidden = total === 0;
       // 합계는 실제로 줄어든 파일만 (원본 유지·형식 변환으로 커진 파일은 빼고)
@@ -1225,7 +1226,7 @@ export default {
         const orig = shrunk.reduce((n, it) => n + it.file.size, 0);
         const out = shrunk.reduce((n, it) => n + it.result.size, 0);
         const left = unsavedCount();
-        sum.textContent = `줄어든 파일 ${shrunk.length}개 ${formatBytes(orig)} → ${formatBytes(out)} (${changeText(orig, out)})` + (left ? ` · 내보내지 않은 결과 ${left}개` : '');
+        sum.textContent = tx('ws.130', { shrunkCount: shrunk.length, p: formatBytes(orig), p1: formatBytes(out), p2: changeText(orig, out) }) + (left ? tx('ws.131', { left }) : '');
         sum.hidden = false;
       } else {
         sum.hidden = true;
@@ -1246,7 +1247,7 @@ export default {
       if (!done.length) return;
       btn.disabled = true;
       const label = btn.querySelector('span');
-      label.textContent = 'ZIP 만드는 중…';
+      label.textContent = tx('ws.132');
       try {
         const { zipSync } = await import(FFLATE_URL);
         const files = {};
@@ -1278,7 +1279,7 @@ export default {
         done.forEach((it) => { it.exported = true; });
       } catch (err) {
         console.error(err);
-        alert('ZIP 파일을 만들지 못했습니다. 네트워크 연결을 확인하거나 개별 다운로드를 이용해 주세요.');
+        alert(tx('ws.133'));
       } finally {
         renderSummary();
       }
@@ -1319,39 +1320,39 @@ function template(lim) {
   return `
   <section class="ws">
     <header class="ws-head">
-      <h2 class="ws-title">SlimKachi 작업실</h2>
-      <ol class="ws-steps" aria-label="사용 순서">
-        <li>올리기</li><li>파일 선택</li><li>설정 · 적용</li><li>결과 확인</li><li>내보내기</li>
+      <h2 class="ws-title">${tx('ws.135')}</h2>
+      <ol class="ws-steps" aria-label="${tx('ws.136')}">
+        <li>${tx('ws.137')}</li><li>${tx('ws.138')}</li><li>${tx('ws.139')}</li><li>${tx('ws.140')}</li><li>${tx('ws.141')}</li>
       </ol>
     </header>
 
-    <div class="ws-drop" tabindex="0" role="button" aria-label="사진·PDF·문서 파일 선택 또는 끌어다 놓기">
+    <div class="ws-drop" tabindex="0" role="button" aria-label="${tx('ws.142')}">
       <div class="ws-drop__inner">
         <span class="ws-drop__icon">${icon('upload', 30)}</span>
-        <strong>사진·PDF·문서를 끌어다 놓거나 눌러서 선택</strong>
-        <span class="muted ws-drop__limit">이 기기 기준 한 번에 최대 ${lim.count}개·${mbText(lim.total)} · 사진 약 ${mpText(lim.maxPixels)} · PDF·문서 ${mbText(lim.maxPdfFile)}까지 · 파일은 서버로 전송되지 않습니다</span>
+        <strong>${tx('ws.143')}</strong>
+        <span class="muted ws-drop__limit">${tx('ws.144', { count: lim.count, p: mbText(lim.total), p1: mpText(lim.maxPixels), p2: mbText(lim.maxPdfFile) })}</span>
       </div>
       <input id="ws-file" type="file" accept="${ACCEPT}" multiple hidden>
     </div>
     <!-- 업로드 칸(누르면 파일 선택) 밖에 둔다 — 안에 두면 펼칠 때 파일 창이 열림 -->
     <details class="ws-formats">
-      <summary>지원 형식 보기 <span aria-hidden="true">▾</span></summary>
+      <summary>${tx('ws.145')} <span aria-hidden="true">▾</span></summary>
       <dl class="ws-formats__list">
-        <div><dt>사진</dt><dd>JPG · PNG · WebP · HEIC(아이폰) · BMP · GIF · AVIF · TIFF <span class="muted">— HEIC·BMP처럼 그대로 저장할 수 없는 형식은 JPG·PNG로 바꿔 줍니다</span></dd></div>
-        <div><dt>문서</dt><dd>HWP · HWPX · DOCX · PPTX · XLSX <span class="muted">— 문서 안 사진만 줄이고 글자·표·서식은 그대로</span></dd></div>
-        <div><dt>PDF</dt><dd>PDF <span class="muted">— 글자 선택·검색은 그대로 유지</span></dd></div>
+        <div><dt>${tx('ws.001')}</dt><dd>${tx('ws.146')} <span class="muted">${tx('ws.147')}</span></dd></div>
+        <div><dt>${tx('ws.002')}</dt><dd>${tx('ws.fmtDoc')} <span class="muted">${tx('ws.148')}</span></dd></div>
+        <div><dt>PDF</dt><dd>PDF <span class="muted">${tx('ws.149')}</span></dd></div>
       </dl>
     </details>
     <p class="ws-drop__msg" role="status" aria-live="polite"></p>
 
     <!-- 올리지 못한 파일 안내 (모달). Esc·Enter 로 닫힘, 포커스는 안에 머문다 -->
     <dialog class="card ws-modal" role="dialog" aria-modal="true" aria-labelledby="ws-modal-title" aria-describedby="ws-modal-lead">
-      <h2 class="ws-modal__title" id="ws-modal-title">${icon('info', 18)}<span>일부 파일을 올리지 못했어요</span></h2>
+      <h2 class="ws-modal__title" id="ws-modal-title">${icon('info', 18)}<span>${tx('ws.150')}</span></h2>
       <p class="ws-modal__lead" id="ws-modal-lead"></p>
-      <ul class="ws-modal__list" aria-label="올리지 못한 파일"></ul>
+      <ul class="ws-modal__list" aria-label="${tx('ws.151')}"></ul>
       <p class="ws-modal__fix"></p>
       <div class="ws-modal__actions">
-        <button type="button" class="btn btn--primary" data-act="modal-ok">${icon('check', 16)}<span>확인</span></button>
+        <button type="button" class="btn btn--primary" data-act="modal-ok">${icon('check', 16)}<span>${tx('ws.152')}</span></button>
       </div>
     </dialog>
 
@@ -1359,63 +1360,63 @@ function template(lim) {
       <!-- 왼쪽: 설정 -->
       <section class="ws-panel ws-settings" aria-labelledby="ws-set-title">
         <div class="ws-panel__head">
-          <h3 id="ws-set-title">${icon('settings', 18)}<span>설정</span></h3>
+          <h3 id="ws-set-title">${icon('settings', 18)}<span>${tx('ws.153')}</span></h3>
           <span class="ws-tag ws-set__kind"></span>
         </div>
         <p class="ws-set__file"></p>
-        <p class="ws-empty ws-set__empty">목록에서 파일을 고르면 그 파일에 맞는 설정이 여기에 나옵니다.</p>
+        <p class="ws-empty ws-set__empty">${tx('ws.154')}</p>
 
         <div class="ws-set" data-kind="image" hidden>
           <fieldset class="ws-field ws-mode">
-            <legend>용량 모드</legend>
+            <legend>${tx('ws.155')}</legend>
             ${seg('ws-mode-image', IMAGE_MODES, 3)}
             <p class="ws-hint"></p>
           </fieldset>
 
           <fieldset class="ws-field">
-            <legend>크기 조정</legend>
+            <legend>${tx('ws.156')}</legend>
             ${seg('ws-resize', RESIZES, 2)}
-            <div class="ws-rpanel" data-panel="percent" role="group" aria-label="비율">
+            <div class="ws-rpanel" data-panel="percent" role="group" aria-label="${tx('ws.157')}">
               <div class="ws-row">
                 ${PERCENTS.map((v) => chip(`data-percent="${v}"`, `${v}%`)).join('')}
               </div>
               <div class="ws-row">
-                <span class="ws-label">원본의</span>
-                <input id="ws-percent" class="input ws-num" type="number" min="1" max="100" step="1" inputmode="numeric" aria-label="비율 직접 입력 (%)">
+                <span class="ws-label">${tx('ws.158')}</span>
+                <input id="ws-percent" class="input ws-num" type="number" min="1" max="100" step="1" inputmode="numeric" aria-label="${tx('ws.159')}">
                 <span class="ws-unit">%</span>
               </div>
             </div>
-            <div class="ws-rpanel" data-panel="pixels" role="group" aria-label="픽셀" hidden>
+            <div class="ws-rpanel" data-panel="pixels" role="group" aria-label="${tx('ws.020')}" hidden>
               <div class="ws-row">
-                <input id="ws-width" class="input ws-num" type="number" min="1" step="1" inputmode="numeric" aria-label="가로 (px)" placeholder="가로">
+                <input id="ws-width" class="input ws-num" type="number" min="1" step="1" inputmode="numeric" aria-label="${tx('ws.160')}" placeholder="${tx('ws.161')}">
                 <span class="ws-unit" aria-hidden="true">×</span>
-                <input id="ws-height" class="input ws-num" type="number" min="1" step="1" inputmode="numeric" aria-label="세로 (px)" placeholder="세로">
+                <input id="ws-height" class="input ws-num" type="number" min="1" step="1" inputmode="numeric" aria-label="${tx('ws.162')}" placeholder="${tx('ws.163')}">
                 <span class="ws-unit">px</span>
               </div>
-              <label class="ws-check"><input id="ws-keep" type="checkbox"> 비율 유지</label>
-              <span class="ws-label">자주 쓰는 크기 (긴 변)</span>
+              <label class="ws-check"><input id="ws-keep" type="checkbox"> ${tx('ws.164')}</label>
+              <span class="ws-label">${tx('ws.165')}</span>
               <div class="ws-row">
                 ${PRESETS.map((p) => chip(`data-preset="${p.px}"`, p.label)).join('')}
               </div>
             </div>
-            <div class="ws-rpanel" data-panel="target" role="group" aria-label="목표 용량" hidden>
+            <div class="ws-rpanel" data-panel="target" role="group" aria-label="${tx('ws.022')}" hidden>
               <div class="ws-row">
-                ${TARGET_PRESETS.map((t) => chip(`data-kb="${t.kb}"`, `${t.label} 이하`)).join('')}
+                ${TARGET_PRESETS.map((t) => chip(`data-kb="${t.kb}"`, tx('ws.134', { label: t.label }))).join('')}
               </div>
               <div class="ws-row">
-                <input id="ws-target" class="input ws-num" type="number" min="0" step="any" inputmode="decimal" aria-label="목표 용량 직접 입력">
-                <select id="ws-target-unit" class="input" aria-label="단위">
+                <input id="ws-target" class="input ws-num" type="number" min="0" step="any" inputmode="decimal" aria-label="${tx('ws.166')}">
+                <select id="ws-target-unit" class="input" aria-label="${tx('ws.167')}">
                   <option value="KB">KB</option>
                   <option value="MB">MB</option>
                 </select>
-                <span class="ws-unit">이하</span>
+                <span class="ws-unit">${tx('ws.168')}</span>
               </div>
             </div>
             <p class="ws-hint ws-resize-hint"></p>
           </fieldset>
 
           <div class="ws-field field">
-            <label for="ws-format">저장 형식</label>
+            <label for="ws-format">${tx('ws.169')}</label>
             <select id="ws-format" class="input" aria-describedby="ws-format-hint">
               ${FORMATS.map((f) => `<option value="${f.id}">${f.label}</option>`).join('')}
             </select>
@@ -1423,37 +1424,37 @@ function template(lim) {
           </div>
 
           <div class="ws-field ws-bg" hidden>
-            <label for="ws-bg">투명 배경 채우기 색</label>
+            <label for="ws-bg">${tx('ws.170')}</label>
             <div class="ws-row">
               <input id="ws-bg" class="input ws-color" type="color">
-              <span class="ws-hint">JPG는 투명 배경을 지원하지 않아 투명한 부분을 이 색으로 채웁니다.</span>
+              <span class="ws-hint">${tx('ws.171')}</span>
             </div>
           </div>
         </div>
 
         <div class="ws-set" data-kind="doc" hidden>
           <fieldset class="ws-field">
-            <legend>용량 모드</legend>
+            <legend>${tx('ws.155')}</legend>
             ${seg('ws-mode-doc', DOC_MODES, 3)}
             <p class="ws-hint"></p>
           </fieldset>
           <p class="ws-hint ws-doc__count" role="status"></p>
-          <p class="ws-note">${icon('info', 16)}<span>문서 안에 든 사진만 꺼내 같은 형식으로 다시 압축합니다. 글자·표·서식·구조는 그대로이고 형식도 바꾸지 않습니다. 결과 문서를 한글·오피스에서 열어 확인하고, 원본은 따로 보관하세요.</span></p>
+          <p class="ws-note">${icon('info', 16)}<span>${tx('ws.172')}</span></p>
         </div>
 
         <div class="ws-set" data-kind="pdf" hidden>
           <fieldset class="ws-field">
-            <legend>압축 모드</legend>
+            <legend>${tx('ws.173')}</legend>
             ${seg('ws-mode-pdf', PDF_MODES, 3)}
             <p class="ws-hint"></p>
           </fieldset>
-          <p class="ws-note">${icon('info', 16)}<span>스캔본·사진이 많은 PDF는 크게 줄고, 글자 위주 PDF는 원래 작아서 감소폭이 작을 수 있습니다. 글자·도형은 그대로라 압축 후에도 글자 선택·검색이 됩니다.</span></p>
+          <p class="ws-note">${icon('info', 16)}<span>${tx('ws.174')}</span></p>
         </div>
 
         <div class="ws-actions">
           <p class="ws-set__msg" role="status" aria-live="polite"></p>
-          <button type="button" class="btn btn--primary" data-act="apply">${icon('check', 16)}<span>적용</span></button>
-          <button type="button" class="btn" data-act="revert">${icon('refresh', 16)}<span>원본으로 되돌리기</span></button>
+          <button type="button" class="btn btn--primary" data-act="apply">${icon('check', 16)}<span>${tx('ws.083')}</span></button>
+          <button type="button" class="btn" data-act="revert">${icon('refresh', 16)}<span>${tx('ws.175')}</span></button>
           <button type="button" class="ws-link" data-act="apply-all" hidden><span></span></button>
         </div>
       </section>
@@ -1461,21 +1462,21 @@ function template(lim) {
       <!-- 가운데: 목록 -->
       <section class="ws-panel ws-listpanel" aria-labelledby="ws-list-title">
         <div class="ws-panel__head">
-          <h3 id="ws-list-title">${icon('image', 18)}<span>파일 목록</span></h3>
+          <h3 id="ws-list-title">${icon('image', 18)}<span>${tx('ws.176')}</span></h3>
           <span class="ws-list__count muted"></span>
           <span class="ws-spacer"></span>
-          <button type="button" class="btn btn--icon" data-act="clear" title="모두 지우기" hidden>${icon('trash', 18)}<span class="sr-only">모두 지우기</span></button>
+          <button type="button" class="btn btn--icon" data-act="clear" title="${tx('ws.177')}" hidden>${icon('trash', 18)}<span class="sr-only">${tx('ws.177')}</span></button>
         </div>
-        <div class="ws-filter" role="group" aria-label="목록 보기 (파일은 지워지지 않습니다)">
+        <div class="ws-filter" role="group" aria-label="${tx('ws.178')}">
           ${FILTERS.map((f) => `<button type="button" class="ws-chip" data-filter="${f.id}" aria-pressed="${f.id === 'all'}">${f.label} <span class="ws-filter__n">0</span></button>`).join('')}
         </div>
-        <p class="ws-empty ws-list__empty">아직 올린 파일이 없습니다. 위에서 사진·PDF·문서를 올려 주세요.</p>
+        <p class="ws-empty ws-list__empty">${tx('ws.179')}</p>
         <p class="ws-empty ws-list__filtered" hidden></p>
-        <ul class="ws-list" aria-label="올린 파일"></ul>
+        <ul class="ws-list" aria-label="${tx('ws.180')}"></ul>
         <div class="ws-export">
           <p class="ws-list__sum muted" hidden></p>
-          <button type="button" class="btn btn--primary" data-act="export" disabled>${icon('archive', 16)}<span>전체 내보내기</span></button>
-          <p class="muted ws-export__hint">처리 완료된 파일만 ZIP으로 받습니다 (파일명_min.확장자)</p>
+          <button type="button" class="btn btn--primary" data-act="export" disabled>${icon('archive', 16)}<span>${tx('ws.128')}</span></button>
+          <p class="muted ws-export__hint">${tx('ws.181')}</p>
           <p class="muted ws-export__hint ws-export__kept" role="status" hidden></p>
         </div>
       </section>
@@ -1483,35 +1484,35 @@ function template(lim) {
       <!-- 오른쪽: 결과 확인 -->
       <section class="ws-panel ws-view" aria-labelledby="ws-view-title">
         <div class="ws-panel__head">
-          <h3 id="ws-view-title">${icon('compare', 18)}<span>결과 확인</span></h3>
+          <h3 id="ws-view-title">${icon('compare', 18)}<span>${tx('ws.140')}</span></h3>
           <span class="ws-spacer"></span>
-          <button type="button" class="btn btn--icon" data-act="zoom" aria-pressed="false" title="실제 크기로 보기">${icon('zoom', 18)}<span class="sr-only">실제 크기로 보기</span></button>
-          <a class="btn btn--icon" data-act="view-download" title="이 파일 받기" hidden>${icon('download', 18)}<span class="sr-only">이 파일 받기</span></a>
+          <button type="button" class="btn btn--icon" data-act="zoom" aria-pressed="false" title="${tx('ws.182')}">${icon('zoom', 18)}<span class="sr-only">${tx('ws.182')}</span></button>
+          <a class="btn btn--icon" data-act="view-download" title="${tx('ws.053')}" hidden>${icon('download', 18)}<span class="sr-only">${tx('ws.053')}</span></a>
         </div>
-        <p class="ws-empty ws-view__empty">파일을 고르면 원본과 결과를 여기서 비교할 수 있습니다.</p>
+        <p class="ws-empty ws-view__empty">${tx('ws.183')}</p>
         <div class="ws-view__body" hidden>
           <p class="ws-view__file"></p>
           <div class="ws-cmp">
             <div class="ws-cmp__viewport">
               <div class="ws-cmp__stage">
-                <img class="ws-cmp__before" alt="원본" draggable="false" decoding="async">
-                <div class="ws-cmp__after-wrap"><img class="ws-cmp__after" alt="결과" draggable="false" decoding="async"></div>
+                <img class="ws-cmp__before" alt="${tx('ws.184')}" draggable="false" decoding="async">
+                <div class="ws-cmp__after-wrap"><img class="ws-cmp__after" alt="${tx('ws.113')}" draggable="false" decoding="async"></div>
                 <div class="ws-cmp__divider" aria-hidden="true"></div>
-                <span class="ws-cmp__label ws-cmp__label--left">원본</span>
-                <span class="ws-cmp__label ws-cmp__label--right">결과</span>
+                <span class="ws-cmp__label ws-cmp__label--left">${tx('ws.184')}</span>
+                <span class="ws-cmp__label ws-cmp__label--right">${tx('ws.113')}</span>
               </div>
               <p class="ws-cmp__noimg muted"></p>
             </div>
-            <input id="ws-range" class="ws-cmp__range" type="range" min="0" max="100" step="0.1" value="50" aria-label="비교 위치 (왼쪽 원본, 오른쪽 결과)">
+            <input id="ws-range" class="ws-cmp__range" type="range" min="0" max="100" step="0.1" value="50" aria-label="${tx('ws.185')}">
             <p class="ws-cmp__caption muted"></p>
           </div>
           <div class="ws-view__status" data-tone="muted">
             <p class="ws-view__msg"></p>
             <span class="ws-progress" hidden><span></span></span>
           </div>
-          <p class="ws-view__pctline"><span class="ws-view__pctlabel">감소율</span> <span class="ws-badge ws-view__pct"></span></p>
+          <p class="ws-view__pctline"><span class="ws-view__pctlabel">${tx('ws.115')}</span> <span class="ws-badge ws-view__pct"></span></p>
           <table class="ws-stats">
-            <thead><tr><th scope="col"><span class="sr-only">항목</span></th><th scope="col">원본</th><th scope="col">결과</th></tr></thead>
+            <thead><tr><th scope="col"><span class="sr-only">${tx('ws.186')}</span></th><th scope="col">${tx('ws.184')}</th><th scope="col">${tx('ws.113')}</th></tr></thead>
             <tbody></tbody>
           </table>
           <p class="ws-view__note muted" hidden></p>

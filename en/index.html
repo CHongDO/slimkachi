@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="landscape">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Day/night is decided before the first paint (saved choice → otherwise the OS setting). The toggle lives in js/theme.js -->
+  <script>(function(){var m;try{m=localStorage.getItem("ft-mode")}catch(e){}if(m!=="day"&&m!=="night")m=matchMedia("(prefers-color-scheme: dark)").matches?"night":"day";var d=document.documentElement;d.setAttribute("data-mode",m);d.setAttribute("data-moon",Math.random()<.5?"full":"crescent")})();</script>
+
+  <!-- ====== SEO ====== -->
+  <title>SlimKachi - Compress Images, PDFs &amp; Office Files Without Uploading | Free</title>
+  <meta name="description" content="SlimKachi compresses images, PDFs and Word, PowerPoint and Excel files right in your browser — nothing is uploaded. Reduce photo size, resize images to 500KB, convert HEIC to JPG and compress PDFs for free, with minimal quality loss.">
+  <link rel="canonical" href="https://slimkachi.pages.dev/en/">
+  <link rel="alternate" hreflang="ko" href="https://slimkachi.pages.dev/">
+  <link rel="alternate" hreflang="en" href="https://slimkachi.pages.dev/en/">
+  <link rel="alternate" hreflang="ja" href="https://slimkachi.pages.dev/ja/">
+  <link rel="alternate" hreflang="x-default" href="https://slimkachi.pages.dev/">
+  <meta name="robots" content="index, follow">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="alternate icon" href="../assets/favicon.ico">
+
+  <!-- ====== Open Graph ====== -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="SlimKachi">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="ko_KR">
+  <meta property="og:locale:alternate" content="ja_JP">
+  <meta property="og:title" content="SlimKachi - Compress Images, PDFs &amp; Office Files Without Uploading | Free">
+  <meta property="og:description" content="Compress images, PDFs and Word, PowerPoint and Excel files in your browser. Nothing is uploaded, quality loss is kept to a minimum, and it's free.">
+  <meta property="og:url" content="https://slimkachi.pages.dev/en/">
+  <meta property="og:image" content="https://slimkachi.pages.dev/assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="SlimKachi logo — compress photos, PDFs and documents without uploading">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SlimKachi - Compress Images, PDFs &amp; Office Files Without Uploading | Free">
+  <meta name="twitter:description" content="Compress images, PDFs and Office files in your browser — nothing is uploaded.">
+  <meta name="twitter:image" content="https://slimkachi.pages.dev/assets/og-image.png">
+
+  <!-- ====== Structured data ====== -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "SlimKachi",
+    "url": "https://slimkachi.pages.dev/en/",
+    "inLanguage": "en",
+    "applicationCategory": "MultimediaApplication",
+    "operatingSystem": "Web Browser",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "description": "A free tool that compresses images, PDFs and Word, PowerPoint and Excel files, resizes photos and converts formats such as HEIC to JPG — all inside your browser, without uploading files to a server."
+  }
+  </script>
+
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/scene.css">
+  <link rel="stylesheet" href="../css/shell.css">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1007112926199900"
+    crossorigin="anonymous"></script>
+</head>
+<body>
+  <!-- ====== Background scene (decorative, hidden from screen readers). Layers: css/scene.css ====== -->
+  <div class="scene" aria-hidden="true">
+    <div class="scene__sky"></div>
+    <div class="scene__night">
+      <div class="scene__stars"><i></i><i></i><i></i><i></i></div>
+      <div class="scene__meteor"></div>
+      <div class="scene__moon"><canvas width="56" height="56"></canvas></div>
+    </div>
+    <div class="scene__day">
+      <div class="scene__clouds"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div>
+    </div>
+    <div class="scene__far" data-depth="0.04"></div>
+    <div class="scene__props scene__props--far" data-depth="0.05"><b><i></i></b><b><i></i></b></div>
+    <div class="scene__haze" data-depth="0.05"></div>
+    <div class="scene__near" data-depth="0.08"></div>
+    <div class="scene__props scene__props--near" data-depth="0.02"><b><i></i></b><b><i></i></b></div>
+    <div class="scene__ground"></div>
+    <div class="scene__fx"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+
+  <div class="app-shell">
+
+    <!-- ====== Header: brand, languages, page links ====== -->
+    <header class="app-header">
+      <a class="app-header__brand brand" href="./" aria-label="SlimKachi home">
+        <svg class="brand__icon" width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><rect x="7" y="0" width="3" height="3" class="kk"/><rect x="4" y="3" width="2" height="1" class="kk" fill-opacity=".45"/><rect x="6" y="3" width="5" height="1" class="kk"/><rect x="11" y="3" width="3" height="1" class="kk" fill-opacity=".45"/><rect x="7" y="4" width="4" height="4" class="kk"/><rect x="9" y="5" width="1" height="1" class="kw"/><rect x="6" y="4" width="1" height="1" class="ky"/><rect x="6" y="6" width="1" height="1" class="ky"/><rect x="7" y="8" width="1" height="1" class="kr"/><rect x="11" y="6" width="2" height="1" class="kg"/><rect x="13" y="6" width="3" height="2" class="ks"/><rect x="13" y="6" width="1" height="2" class="ke"/><rect x="14" y="6" width="1" height="2" class="kr"/><rect x="4" y="8" width="3" height="4" class="kk"/><rect x="8" y="8" width="2" height="4" class="kk"/><rect x="8" y="9" width="3" height="3" class="kw"/><rect x="5" y="9" width="2" height="1" class="kw"/><rect x="1" y="11" width="3" height="1" class="kk"/><rect x="0" y="12" width="2" height="2" class="kk"/><rect x="7" y="12" width="1" height="2" class="kg"/><rect x="9" y="12" width="1" height="2" class="kg"/></svg>
+        <span class="brand__badge" aria-hidden="true">SLIM</span><span class="brand__name" aria-hidden="true">Kachi</span>
+      </a>
+      <span class="app-header__spacer"></span>
+      <nav class="app-header__lang" aria-label="Language">
+        <a href="../" hreflang="ko" lang="ko">한국어</a>
+        <a href="./" hreflang="en" lang="en" aria-current="page">English</a>
+        <a href="../ja/" hreflang="ja" lang="ja">日本語</a>
+      </nav>
+      <!-- About / Features / Privacy pages are in Korean for now -->
+      <div class="app-header__links">
+        <a href="../pages/about.html" hreflang="ko" title="Korean page">About</a>
+        <a href="../pages/features.html" hreflang="ko" title="Korean page">Features</a>
+        <a href="../pages/privacy.html" hreflang="ko" title="Korean page">Privacy</a>
+      </div>
+      <button type="button" class="btn btn--icon" data-theme-toggle aria-pressed="false" title="Switch to night mode"><svg class="ico" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M6 1h1v1h-1zM4 2h2v1h-2zM3 3h3v1h-3zM2 4h4v1h-4zM1 5h5v1h-5zM1 6h5v1h-5zM1 7h5v1h-5zM1 8h6v1h-6zM1 9h7v1h-7zM1 10h13v1h-13zM2 11h11v1h-11zM3 12h9v1h-9zM4 13h7v1h-7zM6 14h3v1h-3z"/></svg><span class="sr-only">Switch to night mode</span></button>
+    </header>
+
+    <!-- ====== Main: the app mounts here ====== -->
+    <main class="app-main">
+      <h1 class="sr-only">SlimKachi — compress images, PDFs and Word, PowerPoint and Excel files in your browser without uploading: reduce photo size, resize images, convert HEIC to JPG</h1>
+      <div id="app-root"></div>
+      <noscript>
+        <div class="card"><p>This tool needs JavaScript to process your files inside the browser. Please turn JavaScript on and reload the page.</p></div>
+      </noscript>
+
+      <!-- ====== Introduction (written in HTML so search engines can read it — not generated by JS) ====== -->
+      <article class="intro" aria-label="About this tool">
+        <section class="intro__sec">
+          <h2>Compress images without visible quality loss</h2>
+          <p>Drop a JPG, PNG or WebP photo and SlimKachi makes the file smaller while keeping it looking the same. It starts with the free wins: camera details, dates and GPS location stored in the photo are removed, which reduces the file size without touching a single pixel. Color profiles and orientation stay, because they affect how the photo looks. PNG files are optimized losslessly first.</p>
+          <p>Instead of using one fixed quality setting, SlimKachi saves the photo at several quality levels and measures how close each one is to the original. It keeps the smallest version you can't tell apart by eye, and separately checks smooth areas such as skies and dark backgrounds, where blocky banding tends to appear.</p>
+          <p>Pick Smallest, Balanced or Quality depending on what the photo is for. If a photo is already well compressed and can't get smaller without losing quality, you get the original back unchanged.</p>
+        </section>
+
+        <section class="intro__sec">
+          <h2>Resize images by percent, pixels or file size</h2>
+          <p>Reduce the photo size in three ways: by percentage (for example 50%), by exact width and height in pixels, or by a target file size. With “Keep aspect ratio” on, the image is fitted inside the box you enter and never stretched.</p>
+          <p>Target size is made for upload forms with limits such as “under 500KB” or “max 1MB”. SlimKachi first lowers quality at full resolution, and only reduces the resolution as much as needed. The result is checked against the real file size, and 1KB is counted as 1,000 bytes so it stays safely under the limit.</p>
+          <p>Images are never enlarged beyond the original. You can save as the original format, JPG, PNG or WebP — and AVIF when your browser supports it.</p>
+        </section>
+
+        <section class="intro__sec">
+          <h2>Convert HEIC to JPG, and other formats</h2>
+          <p>Files aren't filtered by extension. SlimKachi tries to open each file in your browser, so anything your browser can read — JPG, PNG, WebP, BMP, GIF, ICO, AVIF — is accepted. iPhone photos (HEIC/HEIF) and TIFF files need a dedicated decoder, which is downloaded only when you add one of those files and runs entirely on your device.</p>
+          <p>JPG, PNG and WebP can be saved in their original format. Everything else is converted to a sensible format: HEIC becomes a JPG that opens everywhere, while BMP and TIFF become lossless PNG — often much smaller with exactly the same quality. Animated GIFs keep only their first frame. You can choose a different output format in the settings.</p>
+          <p>When a photo with a transparent background is saved as JPG, the transparent area is filled with white (or a color you pick), since JPG has no transparency. Converting JPG to PNG keeps the quality but can make the file larger, and it can't bring back detail that was already lost. If a conversion makes the file bigger, you'll see a note on the result.</p>
+        </section>
+
+        <section class="intro__sec">
+          <h2>Compress PDF files</h2>
+          <p>Most of a PDF's size usually comes from the images inside it. Scans and photo-heavy PDFs are often stored at a much higher resolution than screens or printers need, so bringing those images down to a sensible resolution and recompressing them can shrink the PDF to a fraction of its size.</p>
+          <p>Text, fonts and vector graphics are left alone. Pages are never turned into pictures, so the compressed PDF stays searchable and you can still select and copy text. Text-only PDFs are already small; if one barely shrinks, the original is kept.</p>
+        </section>
+
+        <section class="intro__sec">
+          <h2>Reduce the size of Word, PowerPoint and Excel files</h2>
+          <p>Large DOCX, PPTX and XLSX files are almost always large because of the pictures pasted into them — a few phone photos can turn a short report into a 30MB attachment.</p>
+          <p>SlimKachi takes out only the photos inside the document, compresses each one in its own format (JPG stays JPG, PNG stays PNG) and puts it back in place. Text, tables, formatting, layout and charts are not touched, and the file format doesn't change. Pictures keep the same size on the page, because the document stores the display size separately. Open the result in Office to check it, and keep a copy of the original.</p>
+        </section>
+
+        <section class="intro__sec">
+          <h2>Compress without uploading</h2>
+          <p>Your files are never sent to a server. Compression, resizing and conversion all run inside the browser you're using right now, and results stay in your device's memory until you download them. That makes it safe for ID photos, contracts and anything else you'd rather not upload.</p>
+          <p>The only things downloaded from the internet are the program code needed for processing and ads. You can confirm this yourself by opening your browser's developer tools on the Network tab while you process a file.</p>
+        </section>
+
+        <section class="intro__sec intro__faq">
+          <h2>Frequently asked questions</h2>
+          <h3>Is it really free?</h3>
+          <p>Yes. There's no sign-up, no file limit per day and no watermark on the results.</p>
+          <h3>Will my photos look worse?</h3>
+          <p>Every result is compared with the original and only used if it passes the quality check. Use the slider on the result screen to compare before and after, and switch to the Quality mode if you want an even closer match.</p>
+          <h3>How many files can I add at once?</h3>
+          <p>By default you can add up to 30 files, 300MB in total, at once. Photos can be up to about 25 megapixels, and PDFs and documents up to 80MB each. On computers with 8GB of memory or more (as reported by Chrome or Edge), the limits rise to 50 files, 500MB, about 50 megapixels and 150MB. The limits for your device are shown in the upload area. Files are checked the moment you add them, so anything over the limit is skipped with an explanation instead of freezing the page.</p>
+          <h3>How do I resize an image to under 500KB?</h3>
+          <p>Choose Resize → Target size, click “Under 500KB” (or type your own limit) and apply. SlimKachi lowers quality first and reduces resolution only if it has to, then confirms the real file size is under the target.</p>
+          <h3>Can I convert iPhone HEIC photos to JPG?</h3>
+          <p>Yes. Add HEIC or HEIF photos and they're opened on your device, converted to JPG and compressed at the same time — handy when a website or app doesn't accept HEIC.</p>
+          <h3>The result is the same size as the original.</h3>
+          <p>That means the file was already well optimized and couldn't get smaller without losing quality, so the original was kept. If you need it smaller, try resizing or setting a target size.</p>
+          <h3>Can it compress password-protected files?</h3>
+          <p>No. Password-protected PDFs and Office files, and digitally signed documents, are left untouched with an explanation. Remove the protection (if you're allowed to) and add the file again.</p>
+          <h3>Should I keep the original?</h3>
+          <p>Yes. Text and formatting stay the same, but photos are recompressed, so you may want the full-quality version later. For documents, open the result in Office to check it before you send it.</p>
+          <h3>Does it work on my phone?</h3>
+          <p>Yes. It works the same in mobile browsers; processing speed depends on your device.</p>
+        </section>
+      </article>
+    </main>
+
+    <!-- ====== Footer ====== -->
+    <footer class="app-footer">
+      <p class="app-footer__notice">
+        <svg class="ico" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M7 1h2v1h-2zM5 2h2v1h-2zM9 2h2v1h-2zM3 3h2v1h-2zM11 3h2v1h-2zM2 4h1v1h-1zM13 4h1v1h-1zM2 5h1v1h-1zM10 5h2v1h-2zM13 5h1v1h-1zM2 6h1v1h-1zM9 6h2v1h-2zM13 6h1v1h-1zM2 7h1v1h-1zM4 7h2v1h-2zM8 7h2v1h-2zM13 7h1v1h-1zM3 8h1v1h-1zM5 8h4v1h-4zM12 8h1v1h-1zM3 9h1v1h-1zM6 9h2v1h-2zM12 9h1v1h-1zM4 10h1v1h-1zM11 10h1v1h-1zM5 11h1v1h-1zM10 11h1v1h-1zM6 12h1v1h-1zM9 12h1v1h-1zM7 13h2v1h-2z"/></svg>
+        Files are processed only inside your browser and are never sent to a server.
+      </p>
+      <span>© <span id="year"></span> SlimKachi</span>
+      <span class="app-footer__spacer"></span>
+      <a href="../pages/about.html" hreflang="ko">About (Korean)</a>
+      <a href="../pages/features.html" hreflang="ko">Features (Korean)</a>
+      <a href="../pages/privacy.html" hreflang="ko">Privacy policy (Korean)</a>
+    </footer>
+  </div>
+
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+  <script type="module" src="../js/main.js"></script>
+</body>
+</html>

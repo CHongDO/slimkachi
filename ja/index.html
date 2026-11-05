@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="landscape">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 昼／夜は描画前に決める（保存した値 → なければOSの設定）。切り替えは js/theme.js -->
+  <script>(function(){var m;try{m=localStorage.getItem("ft-mode")}catch(e){}if(m!=="day"&&m!=="night")m=matchMedia("(prefers-color-scheme: dark)").matches?"night":"day";var d=document.documentElement;d.setAttribute("data-mode",m);d.setAttribute("data-moon",Math.random()<.5?"full":"crescent")})();</script>
+
+  <!-- ====== SEO ====== -->
+  <title>SlimKachi - 画像・PDF・Officeファイルを圧縮 | アップロード不要・無料</title>
+  <meta name="description" content="SlimKachi（スリムカチ）は、画像・PDF・Word・PowerPoint・Excelファイルの容量をブラウザの中だけで減らせる無料ツールです。ファイルのアップロードは不要。写真の容量を減らす、画像サイズの変更、HEICからJPGへの変換、PDF圧縮まで、画質の劣化はできるだけ抑えます。">
+  <link rel="canonical" href="https://slimkachi.pages.dev/ja/">
+  <link rel="alternate" hreflang="ko" href="https://slimkachi.pages.dev/">
+  <link rel="alternate" hreflang="en" href="https://slimkachi.pages.dev/en/">
+  <link rel="alternate" hreflang="ja" href="https://slimkachi.pages.dev/ja/">
+  <link rel="alternate" hreflang="x-default" href="https://slimkachi.pages.dev/">
+  <meta name="robots" content="index, follow">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="alternate icon" href="../assets/favicon.ico">
+
+  <!-- ====== Open Graph ====== -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="SlimKachi">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:locale:alternate" content="ko_KR">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta property="og:title" content="SlimKachi - 画像・PDF・Officeファイルを圧縮 | アップロード不要・無料">
+  <meta property="og:description" content="画像・PDF・Word・PowerPoint・Excelファイルの容量を、アップロードせずブラウザの中だけで減らせます。画質の劣化を抑えて、無料で使えます。">
+  <meta property="og:url" content="https://slimkachi.pages.dev/ja/">
+  <meta property="og:image" content="https://slimkachi.pages.dev/assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="SlimKachiのロゴ — 写真・PDF・文書の容量を減らす · アップロード不要">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SlimKachi - 画像・PDF・Officeファイルを圧縮 | アップロード不要・無料">
+  <meta name="twitter:description" content="画像・PDF・Officeファイルの容量を、アップロードせずブラウザの中だけで減らせます。">
+  <meta name="twitter:image" content="https://slimkachi.pages.dev/assets/og-image.png">
+
+  <!-- ====== 構造化データ ====== -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "SlimKachi",
+    "alternateName": "スリムカチ",
+    "url": "https://slimkachi.pages.dev/ja/",
+    "inLanguage": "ja",
+    "applicationCategory": "MultimediaApplication",
+    "operatingSystem": "Web Browser",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" },
+    "description": "ファイルをサーバーに送らず、ブラウザの中だけで画像・PDF・Word・PowerPoint・Excelファイルの容量を減らし、画像サイズの変更やHEICからJPGへの変換ができる無料ツール。"
+  }
+  </script>
+
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/scene.css">
+  <link rel="stylesheet" href="../css/shell.css">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1007112926199900"
+    crossorigin="anonymous"></script>
+</head>
+<body>
+  <!-- ====== 背景（装飾 — スクリーンリーダーからは隠す）。レイヤーは css/scene.css ====== -->
+  <div class="scene" aria-hidden="true">
+    <div class="scene__sky"></div>
+    <div class="scene__night">
+      <div class="scene__stars"><i></i><i></i><i></i><i></i></div>
+      <div class="scene__meteor"></div>
+      <div class="scene__moon"><canvas width="56" height="56"></canvas></div>
+    </div>
+    <div class="scene__day">
+      <div class="scene__clouds"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div>
+    </div>
+    <div class="scene__far" data-depth="0.04"></div>
+    <div class="scene__props scene__props--far" data-depth="0.05"><b><i></i></b><b><i></i></b></div>
+    <div class="scene__haze" data-depth="0.05"></div>
+    <div class="scene__near" data-depth="0.08"></div>
+    <div class="scene__props scene__props--near" data-depth="0.02"><b><i></i></b><b><i></i></b></div>
+    <div class="scene__ground"></div>
+    <div class="scene__fx"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+
+  <div class="app-shell">
+
+    <!-- ====== ヘッダー：ロゴ・言語・ページリンク ====== -->
+    <header class="app-header">
+      <a class="app-header__brand brand" href="./" aria-label="SlimKachi トップ">
+        <svg class="brand__icon" width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><rect x="7" y="0" width="3" height="3" class="kk"/><rect x="4" y="3" width="2" height="1" class="kk" fill-opacity=".45"/><rect x="6" y="3" width="5" height="1" class="kk"/><rect x="11" y="3" width="3" height="1" class="kk" fill-opacity=".45"/><rect x="7" y="4" width="4" height="4" class="kk"/><rect x="9" y="5" width="1" height="1" class="kw"/><rect x="6" y="4" width="1" height="1" class="ky"/><rect x="6" y="6" width="1" height="1" class="ky"/><rect x="7" y="8" width="1" height="1" class="kr"/><rect x="11" y="6" width="2" height="1" class="kg"/><rect x="13" y="6" width="3" height="2" class="ks"/><rect x="13" y="6" width="1" height="2" class="ke"/><rect x="14" y="6" width="1" height="2" class="kr"/><rect x="4" y="8" width="3" height="4" class="kk"/><rect x="8" y="8" width="2" height="4" class="kk"/><rect x="8" y="9" width="3" height="3" class="kw"/><rect x="5" y="9" width="2" height="1" class="kw"/><rect x="1" y="11" width="3" height="1" class="kk"/><rect x="0" y="12" width="2" height="2" class="kk"/><rect x="7" y="12" width="1" height="2" class="kg"/><rect x="9" y="12" width="1" height="2" class="kg"/></svg>
+        <span class="brand__badge" aria-hidden="true">SLIM</span><span class="brand__name" aria-hidden="true">Kachi</span>
+      </a>
+      <span class="app-header__spacer"></span>
+      <nav class="app-header__lang" aria-label="言語">
+        <a href="../" hreflang="ko" lang="ko">한국어</a>
+        <a href="../en/" hreflang="en" lang="en">English</a>
+        <a href="./" hreflang="ja" lang="ja" aria-current="page">日本語</a>
+      </nav>
+      <!-- 紹介・機能・プライバシーのページは今のところ韓国語のみ -->
+      <div class="app-header__links">
+        <a href="../pages/about.html" hreflang="ko" title="韓国語のページ">紹介</a>
+        <a href="../pages/features.html" hreflang="ko" title="韓国語のページ">機能</a>
+        <a href="../pages/privacy.html" hreflang="ko" title="韓国語のページ">プライバシー</a>
+      </div>
+      <button type="button" class="btn btn--icon" data-theme-toggle aria-pressed="false" title="夜モードに切り替え"><svg class="ico" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M6 1h1v1h-1zM4 2h2v1h-2zM3 3h3v1h-3zM2 4h4v1h-4zM1 5h5v1h-5zM1 6h5v1h-5zM1 7h5v1h-5zM1 8h6v1h-6zM1 9h7v1h-7zM1 10h13v1h-13zM2 11h11v1h-11zM3 12h9v1h-9zM4 13h7v1h-7zM6 14h3v1h-3z"/></svg><span class="sr-only">夜モードに切り替え</span></button>
+    </header>
+
+    <!-- ====== 本文：ここにアプリが入る ====== -->
+    <main class="app-main">
+      <h1 class="sr-only">SlimKachi — 画像・PDF・Word・PowerPoint・Excelの容量をアップロード不要で圧縮。写真の容量を減らす・画像サイズ変更・HEICからJPGへの変換</h1>
+      <div id="app-root"></div>
+      <noscript>
+        <div class="card"><p>このツールはブラウザの中でファイルを処理するためにJavaScriptが必要です。JavaScriptを有効にしてから再読み込みしてください。</p></div>
+      </noscript>
+
+      <!-- ====== 紹介（検索エンジンが読めるようHTMLで直接書く — JSでは作らない） ====== -->
+      <article class="intro" aria-label="ツールの紹介">
+        <section class="intro__sec">
+          <h2>画像を圧縮して、写真の容量を減らす</h2>
+          <p>JPG・PNG・WebPの写真をドロップするだけで、見た目をほとんど変えずにファイルを軽くします。まずは画質に関係のない部分から。写真に埋め込まれた撮影機種・日時・位置情報（Exif）を取り除くだけでも、画素を1つも変えずに容量が減ります。色の見え方や向きに関わる情報は残します。PNGは画素を変えないロスレス最適化から行います。</p>
+          <p>画質の数値を決め打ちにはしません。いくつもの品質で保存してみて元の写真とどれだけ似ているかを自動で比べ、見た目で違いが分からない範囲でいちばん小さいものを選びます。空や暗い背景のようななめらかな部分に出やすい階段状のムラも別にチェックします。</p>
+          <p>「容量優先」「バランス」「画質優先」から用途に合わせて選べます。すでに十分圧縮された写真で、画質を落とさずにはこれ以上小さくできない場合は、元のファイルをそのまま返します。</p>
+        </section>
+
+        <section class="intro__sec">
+          <h2>画像サイズを変更（500KB以下などの目標サイズにも対応）</h2>
+          <p>画像サイズの変更は3通り。50%のように比率で縮小する方法、幅と高さをピクセルで指定する方法、そしてファイルの容量で指定する方法です。「縦横比を保つ」をオンにすれば、指定した枠に収まるように縮小され、写真がゆがむことはありません。</p>
+          <p>目標サイズは「500KB以下」「1MBまで」のような提出先の容量制限に合わせるときに便利です。まず解像度はそのままで画質だけを調整し、それでも収まらないときだけ必要な分だけ解像度を下げます。結果は実際のファイルサイズで目標以下かどうかを確かめてから渡し、1KB＝1000バイトで計算して少し余裕をもたせます。</p>
+          <p>元の画像より大きく拡大することはありません。保存形式は「元のまま」・JPG・PNG・WebPから選べ、ブラウザが対応していればAVIFも選べます。</p>
+        </section>
+
+        <section class="intro__sec">
+          <h2>HEICをJPGに変換、ほかの形式にも対応</h2>
+          <p>拡張子だけで判断せず、追加したファイルを実際にブラウザで開いてみて、開けたものを画像として扱います。JPG・PNG・WebPはもちろん、BMP・GIF・ICO・AVIFなどブラウザが読める形式はすべて対応しています。iPhoneの写真（HEIC・HEIF）とTIFFはブラウザが直接開けないため、そのファイルを追加したときだけ専用の変換ツールを読み込み、お使いの端末の中で開きます。</p>
+          <p>元の形式のまま保存できるのはJPG・PNG・WebPです。そのほかは適した形式に変換します。iPhoneのHEIC写真はどこでも開けるJPGに、BMPとTIFFは画質が変わらないロスレスPNGに変換します。圧縮がない、または弱いBMP・TIFFは、PNGにするだけで大きく軽くなることがよくあります。動くGIFは最初のコマだけを保存します。保存形式は設定で自分で選ぶこともできます。</p>
+          <p>背景が透明な画像をJPGにすると、JPGは透明に対応していないため背景を白（または選んだ色）で塗りつぶします。JPGをPNGに変換すると画質はそのままですが、容量はかえって大きくなることがあり、すでに失われた画質が戻るわけではありません。変換で容量が増えたときは結果画面でお知らせします。</p>
+        </section>
+
+        <section class="intro__sec">
+          <h2>PDFを圧縮する</h2>
+          <p>PDFの容量の大部分は、たいてい中に入っている画像です。スキャンしたPDFや写真の多いPDFは、画面表示や印刷に必要な解像度よりずっと高い解像度で保存されていることが多く、画像を適切な解像度に下げて圧縮し直すだけで、元の数分の一になることも珍しくありません。</p>
+          <p>文字・フォント・図形には手を加えません。ページを丸ごと画像にしないので、圧縮後のPDFでも文字の選択やコピー、検索がそのままできます。文字中心のPDFはもともと小さいため、ほとんど縮まない場合は元のファイルを残します。</p>
+        </section>
+
+        <section class="intro__sec">
+          <h2>Word・PowerPoint・Excelファイルを軽くする</h2>
+          <p>DOCX・PPTX・XLSXファイルが重くなる原因は、ほとんどが貼り付けた写真です。スマホで撮った写真を数枚入れただけで、数ページの資料が数十MBになることもあります。</p>
+          <p>SlimKachiは文書の中の写真だけを取り出し、同じ形式（JPGはJPG、PNGはPNG）で圧縮し直して元の場所に戻します。文字・表・書式・レイアウト・グラフには手を加えず、ファイル形式も変えません。写真の表示サイズは文書側が別に持っているので、ページ上の大きさや配置も変わりません。結果はOfficeで開いて確認し、元のファイルは別に保管してください。</p>
+        </section>
+
+        <section class="intro__sec">
+          <h2>アップロード不要だから安心</h2>
+          <p>追加したファイルがサーバーに送信されることはありません。圧縮・サイズ変更・形式の変換は、いま使っているブラウザの中ですべて完結し、結果もダウンロードするまで端末のメモリに一時的に置かれるだけです。身分証の写真や契約書など、人に見られたくないファイルも安心して軽くできます。</p>
+          <p>インターネットから読み込むのは、処理に必要なプログラムと広告だけです。ブラウザの開発者ツールでネットワークタブを開いたままファイルを処理すれば、ご自身で確かめられます。</p>
+        </section>
+
+        <section class="intro__sec intro__faq">
+          <h2>よくある質問</h2>
+          <h3>本当に無料ですか？</h3>
+          <p>はい。会員登録なしで無料で使え、結果にウォーターマークも入りません。</p>
+          <h3>画質は落ちませんか？</h3>
+          <p>元の画像と比べて基準を満たした結果だけを使います。結果画面のスライダーで前後を比べられ、気になる場合は「画質優先」でもう一度適用してください。</p>
+          <h3>一度に何個まで追加できますか？</h3>
+          <p>通常は一度に30個、合計300MBまで追加できます。写真は1枚あたり約2,500万画素、PDFと文書は1つあたり80MBまでです。メモリが8GB以上のパソコン（Chrome・Edgeで確認できる場合）では、50個・500MB、写真は約5,000万画素、PDF・文書は150MBまで増えます。お使いの端末の上限はファイルを追加する欄に表示されます。処理中に画面が固まらないよう、追加した時点で確認し、上限を超えるファイルは理由をお知らせして残りだけを一覧に入れます。</p>
+          <h3>画像を500KB以下にするには？</h3>
+          <p>サイズ変更で「目標サイズ」を選び、「500KB以下」を押して（または数値を入力して）適用します。まず画質を調整し、必要なときだけ解像度を下げて、実際のファイルサイズが目標以下になったことを確かめます。</p>
+          <h3>iPhoneのHEIC写真をJPGに変換できますか？</h3>
+          <p>はい。HEIC・HEIFの写真を追加すると、お使いの端末の中で開いてJPGに変換し、同時に容量も減らします。HEICを受け付けないサイトやアプリに提出するときに便利です。</p>
+          <h3>結果が元と同じサイズになりました。</h3>
+          <p>すでに最適化されたファイルで、画質を落とさずにはこれ以上小さくできないという意味です。その場合は元のファイルを残します。さらに小さくしたいときは、サイズ変更や目標サイズをお試しください。</p>
+          <h3>パスワード付きのファイルも圧縮できますか？</h3>
+          <p>できません。パスワードが設定されたPDFやOfficeファイル、電子署名された文書は、中身に手を加えずにお知らせだけを表示します。解除できる権限があれば、解除してからもう一度追加してください。</p>
+          <h3>元のファイルは残しておいたほうがいいですか？</h3>
+          <p>はい、別に保管しておいてください。文字や書式はそのままですが、写真は圧縮し直されるため、あとで元の解像度の写真が必要になることがあります。文書は結果をOfficeで開いて確認してから使うことをおすすめします。</p>
+          <h3>スマホでも使えますか？</h3>
+          <p>はい。スマホのブラウザでも同じように動きます。処理の速さは端末の性能によって変わります。</p>
+        </section>
+      </article>
+    </main>
+
+    <!-- ====== フッター ====== -->
+    <footer class="app-footer">
+      <p class="app-footer__notice">
+        <svg class="ico" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M7 1h2v1h-2zM5 2h2v1h-2zM9 2h2v1h-2zM3 3h2v1h-2zM11 3h2v1h-2zM2 4h1v1h-1zM13 4h1v1h-1zM2 5h1v1h-1zM10 5h2v1h-2zM13 5h1v1h-1zM2 6h1v1h-1zM9 6h2v1h-2zM13 6h1v1h-1zM2 7h1v1h-1zM4 7h2v1h-2zM8 7h2v1h-2zM13 7h1v1h-1zM3 8h1v1h-1zM5 8h4v1h-4zM12 8h1v1h-1zM3 9h1v1h-1zM6 9h2v1h-2zM12 9h1v1h-1zM4 10h1v1h-1zM11 10h1v1h-1zM5 11h1v1h-1zM10 11h1v1h-1zM6 12h1v1h-1zM9 12h1v1h-1zM7 13h2v1h-2z"/></svg>
+        ファイルはブラウザの中だけで処理され、サーバーには送信されません。
+      </p>
+      <span>© <span id="year"></span> SlimKachi</span>
+      <span class="app-footer__spacer"></span>
+      <a href="../pages/about.html" hreflang="ko">サイト紹介（韓国語）</a>
+      <a href="../pages/features.html" hreflang="ko">機能紹介（韓国語）</a>
+      <a href="../pages/privacy.html" hreflang="ko">プライバシーポリシー（韓国語）</a>
+    </footer>
+  </div>
+
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+  <script type="module" src="../js/main.js"></script>
+</body>
+</html>

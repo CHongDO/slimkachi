@@ -11,6 +11,7 @@
    ============================================================ */
 
 import { serve } from '../../shared/image/workerHost.js';
+import { t as tx } from '../../i18n/index.js';
 
 const ENGINES = {
   compress: () => import('../../engines/imageCompress.js').then((m) => m.compressImage),
@@ -21,7 +22,7 @@ const ENGINES = {
 
 serve(async (file, options, ctx) => {
   const load = ENGINES[options.engine];
-  if (!load) throw new Error('알 수 없는 작업입니다');
+  if (!load) throw new Error(tx('worker.001'));
   const run = await load();
   return run(file, options, ctx);
 });

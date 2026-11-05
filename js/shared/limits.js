@@ -11,6 +11,7 @@
    ============================================================ */
 
 import { imageDims } from './imageSize.js';
+import { t as tx } from '../i18n/index.js';
 
 export const MB = 1000 * 1000;
 
@@ -63,11 +64,11 @@ async function docSignature(file) {
   if (ext === 'hwp') {
     if (cfb) return '';
     return String.fromCharCode(...h.subarray(0, 17)) === 'HWP Document File'
-      ? '한글 97 이전 형식(HWP 3.0)은 지원하지 않습니다' : '확장자는 HWP지만 한글 문서가 아닙니다';
+      ? tx('lim.001') : tx('lim.002');
   }
-  if (ext === 'hwpx') return zip ? '' : '확장자는 HWPX지만 한글 문서가 아닙니다';
+  if (ext === 'hwpx') return zip ? '' : tx('lim.003');
   // 워드·파워포인트·엑셀: 보통 ZIP, 암호를 걸면 복합 파일 (암호 문서는 목록에 넣고 '처리 불가'로 안내)
-  return zip || cfb ? '' : `확장자는 ${E}지만 오피스 문서가 아닙니다`;
+  return zip || cfb ? '' : tx('lim.004', { E });
 }
 
 /** 'MB' 표기 (정수면 소수점 없이) */
@@ -76,4 +77,4 @@ export const mbText = (bytes) => {
   return `${v >= 10 ? Math.floor(v) : +v.toFixed(1)}MB`;
 };
 /** 화소 수 → '2,500만 화소' */
-export const mpText = (px) => `${Math.floor(px / 10000).toLocaleString('ko-KR')}만 화소`;
+export const mpText = (px) => tx('fmt.mp', { px });   // 언어마다 표기가 달라 사전의 함수가 만든다 (ko 2,500만 화소 · en 25 megapixels · ja 2,500万画素)

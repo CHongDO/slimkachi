@@ -14,12 +14,13 @@
 import { serve } from '../../shared/image/workerHost.js';
 import { detectType, isAnimated } from '../../shared/image/metadata.js';
 import { decodeSource, closeSource, makeThumb, detectAlpha, drawToCanvas } from '../../shared/image/pipeline.js';
+import { t as tx } from '../../i18n/index.js';
 
 const ALPHA_CHECK_PIXELS = 16_000_000;   // 이보다 크면 줄여서 투명 영역 검사 (반투명 평균이 남아 충분히 잡힘)
 const PREVIEW_PNG_PIXELS = 8_000_000;    // 미리보기 그림: 이하면 PNG(그대로), 넘으면 고화질 JPG
 const UNKNOWN_MAX_BYTES = 100 * 1000 * 1000;
 
-const unsupported = () => Object.assign(new Error('이 형식은 아직 지원하지 않습니다'), { unsupported: true });
+const unsupported = () => Object.assign(new Error(tx('thumb.001')), { unsupported: true });
 
 serve(async (file, options) => {
   // 문서(한글·오피스): 형식·보안 여부·사진 수만 확인 (그림 미리보기 없음)
