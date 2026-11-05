@@ -491,3 +491,48 @@
   .ws-modal { padding: var(--space-4); }
   .ws-modal__title { font-size: var(--font-size-xs); }
 }
+/* 은은한 전통 문양: 장식은 클릭을 받지 않고 하단 여백에만 그린다. */
+.ws-panel {
+  position: relative;
+  isolation: isolate;
+  padding-bottom: var(--ornament-footer);
+}
+.ws-panel::before {
+  content: "";
+  position: absolute;
+  inset: var(--ornament-inset);
+  border: 1px solid var(--ornament-frame);
+  pointer-events: none;
+  z-index: -1;
+}
+.ws-panel::after {
+  content: "";
+  position: absolute;
+  right: var(--space-4);
+  bottom: var(--space-3);
+  width: var(--ornament-branch-width);
+  height: var(--ornament-branch-height);
+  background: var(--ornament-ink);
+  opacity: var(--ornament-opacity);
+  -webkit-mask: var(--panel-ornament) center / contain no-repeat;
+  mask: var(--panel-ornament) center / contain no-repeat;
+  pointer-events: none;
+  z-index: -1;
+}
+.ws-settings { --panel-ornament: url("../../assets/ornaments/lattice.svg"); }
+.ws-settings::after { left: var(--space-3); right: auto; width: 100px; }
+.ws-listpanel { --panel-ornament: url("../../assets/ornaments/plum-branch.png"); }
+.ws-view { --panel-ornament: url("../../assets/ornaments/sprig.svg"); }
+.ws-view::after { width: 90px; }
+@media (min-width: 721px) {
+  .ws-settings { position: sticky; }
+}
+@media (min-width: 1140px) {
+  .ws-view { position: sticky; }
+}
+@media (max-width: 720px) {
+  .ws-panel::after { height: 36px; max-width: 112px; }
+}
+@media (forced-colors: active) {
+  .ws-panel::before, .ws-panel::after { display: none; }
+}

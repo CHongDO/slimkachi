@@ -294,3 +294,33 @@ ins.adsbygoogle, .google-auto-placed {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+/* 소개 카드에는 얇은 회문 띠만 둔다. 본문과는 하단 여백으로 분리한다. */
+.intro {
+  position: relative;
+  isolation: isolate;
+  padding-bottom: var(--ornament-footer);
+}
+.intro::before {
+  content: "";
+  position: absolute;
+  inset: var(--ornament-inset);
+  border: 1px solid var(--ornament-frame);
+  pointer-events: none;
+  z-index: -1;
+}
+.intro::after {
+  content: "";
+  position: absolute;
+  inset-inline: var(--space-5);
+  bottom: var(--space-3);
+  height: 12px;
+  background: var(--ornament-ink);
+  opacity: var(--ornament-opacity);
+  -webkit-mask: url("../assets/ornaments/meander.svg") left center / 32px 12px repeat-x;
+  mask: url("../assets/ornaments/meander.svg") left center / 32px 12px repeat-x;
+  pointer-events: none;
+  z-index: -1;
+}
+@media (forced-colors: active) {
+  .intro::before, .intro::after { display: none; }
+}

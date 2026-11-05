@@ -249,3 +249,18 @@
 
   color-scheme: dark;
 }
+:root {
+  /* 한지 카드 장식: 내용보다 옅게, 낮/밤에 같은 형태를 재사용한다. */
+  --ornament-ink: #a87082;
+  --ornament-opacity: .28;
+  --ornament-frame: #ead6d3;
+  --ornament-inset: 7px;
+  --ornament-footer: 60px;
+  --ornament-branch-width: 144px;
+  --ornament-branch-height: 48px;
+}
+:root[data-mode="night"] {
+  --ornament-ink: #b3a0cb;
+  --ornament-opacity: .25;
+  --ornament-frame: #4b405f;
+}
