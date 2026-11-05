@@ -590,13 +590,16 @@ export default {
       switch (item.status) {
         case 'queued': return { text: '처리 대기', tone: 'busy' };
         case 'working': return { text: `처리 중 ${Math.round(item.pct * 100)}%`, tone: 'busy' };
-        case 'done': return { text: '완료', tone: 'good' };
+        case 'done': return isKept(item) ? { text: '원본 유지', tone: 'kept' } : { text: '완료', tone: 'good' };
         case 'error': return item.notice ? { text: '처리 불가', tone: 'warn' } : { text: '오류', tone: 'danger' };
         default: return { text: '대기', tone: 'muted' };
       }
     }
     const isDirty = (item) => !!item.applied && keyOf(toOptions(item)) !== keyOf(item.applied);
-    const outName = (item) => renameExt(item.file.name, item.result.ext, '_min');
+    /** 원본 유지 = 결과가 원본과 같은 바이트(엔진이 kind 'original' 로 돌려줌) */
+    const isKept = (item) => item.status === 'done' && !!item.result && item.result.kind === 'original';
+    // 원본 유지 파일은 줄지 않았으므로 _min 을 붙이지 않고 원래 이름 그대로
+    const outName = (item) => (isKept(item) ? item.file.name : renameExt(item.file.name, item.result.ext, '_min'));
 
     function renderRow(item) {
       const el = item.el;
@@ -608,13 +611,14 @@ export default {
       const st = statusOf(item);
       const stEl = el.querySelector('.ws-status');
       stEl.textContent = st.text;
-      stEl.className = `ws-status ws-status--${st.tone}`;
+      // 원본 유지는 회색 배지 (감소율 배지는 띄우지 않음)
+      stEl.className = st.tone === 'kept' ? 'ws-status ws-badge ws-badge--muted' : `ws-status ws-status--${st.tone}`;
       const out = el.querySelector('.ws-item__out');
       out.textContent = '';
       const r = item.result;
       if (item.status === 'done' && r) {
         if (r.kind === 'original') {
-          out.append('원본 유지');
+          // 상태 배지가 '원본 유지'를 보여 주므로 결과 칸은 비운다
         } else {
           const to = document.createElement('strong');
           to.textContent = `→ ${formatBytes(r.size)}`;
@@ -1168,7 +1172,7 @@ export default {
       pct.textContent = ready ? (r.kind === 'original' ? '원본 유지' : changeText(item.file.size, r.size)) : '';
       pct.className = `ws-badge ws-view__pct ws-badge--${ready && r.warn ? 'warn' : ready && r.size < item.file.size ? 'good' : 'muted'}`;
       $('.ws-view__pctline').hidden = !ready;
-      $('.ws-view__pctlabel').textContent = ready && r.size > item.file.size ? '용량 변화' : '감소율';
+      $('.ws-view__pctlabel').textContent = ready && r.kind === 'original' ? '결과' : ready && r.size > item.file.size ? '용량 변화' : '감소율';
 
       const bits = [];
       if (ready) {
@@ -1192,26 +1196,36 @@ export default {
 
     /* ===================== 요약 · 내보내기 ===================== */
     const doneItems = () => state.items.filter((it) => it.status === 'done' && it.result);
+    // 내보낼 결과 = 처리가 끝났고 원본 유지가 아닌 것 (원본 유지는 ZIP 에서 기본으로 뺀다)
+    const exportItems = () => doneItems().filter((it) => !isKept(it));
+    const keptItems = () => doneItems().filter(isKept);
     const unsaved = (it) => it.status === 'done' && it.result && it.result.kind !== 'original' && !it.exported;
     const unsavedCount = () => state.items.filter(unsaved).length;
 
     function renderSummary() {
       renderFilter();
       const total = state.items.length;
-      const done = doneItems();
+      const exportable = exportItems();
+      const kept = keptItems();
       $('.ws-list__empty').hidden = total > 0;
       drop.classList.toggle('is-compact', total > 0);
-      $('.ws-list__count').textContent = total ? `${total}개 · 완료 ${done.length}개` : '';
+      // 원본 유지 개수는 내보내기 버튼 아래 안내에 (여기 붙이면 좁은 패널에서 제목이 두 줄로 밀림)
+      $('.ws-list__count').textContent = total ? `${total}개 · 완료 ${exportable.length}개` : '';
       const exp = $('[data-act="export"]');
-      exp.disabled = done.length === 0;
-      exp.querySelector('span').textContent = done.length ? `전체 내보내기 (${done.length})` : '전체 내보내기';
+      exp.disabled = exportable.length === 0;
+      exp.querySelector('span').textContent = exportable.length ? `전체 내보내기 (${exportable.length})` : '전체 내보내기';
+      const keptNote = $('.ws-export__kept');
+      keptNote.textContent = kept.length ? `원본 유지 ${kept.length}개는 줄일 수 없어 제외했습니다` : '';
+      keptNote.hidden = !kept.length;
       $('[data-act="clear"]').hidden = total === 0;
+      // 합계는 실제로 줄어든 파일만 (원본 유지·형식 변환으로 커진 파일은 빼고)
       const sum = $('.ws-list__sum');
-      if (done.length) {
-        const orig = done.reduce((n, it) => n + it.file.size, 0);
-        const out = done.reduce((n, it) => n + it.result.size, 0);
+      const shrunk = exportable.filter((it) => it.result.size < it.file.size);
+      if (shrunk.length) {
+        const orig = shrunk.reduce((n, it) => n + it.file.size, 0);
+        const out = shrunk.reduce((n, it) => n + it.result.size, 0);
         const left = unsavedCount();
-        sum.textContent = `완료한 파일 ${formatBytes(orig)} → ${formatBytes(out)} (${changeText(orig, out)})` + (left ? ` · 내보내지 않은 결과 ${left}개` : '');
+        sum.textContent = `줄어든 파일 ${shrunk.length}개 ${formatBytes(orig)} → ${formatBytes(out)} (${changeText(orig, out)})` + (left ? ` · 내보내지 않은 결과 ${left}개` : '');
         sum.hidden = false;
       } else {
         sum.hidden = true;
@@ -1228,7 +1242,7 @@ export default {
     $('[data-act="export"]').addEventListener('click', exportZip);
     async function exportZip() {
       const btn = $('[data-act="export"]');
-      const done = doneItems();
+      const done = exportItems();   // 원본 유지 파일은 빼고
       if (!done.length) return;
       btn.disabled = true;
       const label = btn.querySelector('span');
@@ -1253,7 +1267,10 @@ export default {
         const url = URL.createObjectURL(new Blob([zip], { type: 'application/zip' }));
         const a = document.createElement('a');
         a.href = url;
-        a.download = `file-tool_${new Date().toISOString().slice(0, 10)}.zip`;
+        // 이용자 기기의 오늘 날짜 (toISOString 은 UTC 라 한국 시간 오전 9시 전엔 하루 전 날짜가 됨)
+        const d = new Date();
+        const ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        a.download = `slimkachi_${ymd}.zip`;
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -1459,6 +1476,7 @@ function template(lim) {
           <p class="ws-list__sum muted" hidden></p>
           <button type="button" class="btn btn--primary" data-act="export" disabled>${icon('archive', 16)}<span>전체 내보내기</span></button>
           <p class="muted ws-export__hint">처리 완료된 파일만 ZIP으로 받습니다 (파일명_min.확장자)</p>
+          <p class="muted ws-export__hint ws-export__kept" role="status" hidden></p>
         </div>
       </section>
 
