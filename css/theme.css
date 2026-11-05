@@ -252,15 +252,21 @@
 :root {
   /* 한지 카드 장식: 내용보다 옅게, 낮/밤에 같은 형태를 재사용한다. */
   --ornament-ink: #a87082;
-  --ornament-opacity: .28;
+  --ornament-opacity: .34;
   --ornament-frame: #ead6d3;
   --ornament-inset: 7px;
   --ornament-footer: 60px;
   --ornament-branch-width: 144px;
   --ornament-branch-height: 48px;
+  --ornament-lattice-width: 72px;
+  --ornament-lattice-height: 40px;
+  --ornament-sprig-width: 100px;
+  --ornament-mobile-width: 120px;
+  --ornament-band-width: 32px;
+  --ornament-band-height: 12px;
 }
 :root[data-mode="night"] {
   --ornament-ink: #b3a0cb;
-  --ornament-opacity: .25;
+  --ornament-opacity: .30;
   --ornament-frame: #4b405f;
 }

@@ -520,10 +520,10 @@
   z-index: -1;
 }
 .ws-settings { --panel-ornament: url("../../assets/ornaments/lattice.svg"); }
-.ws-settings::after { left: var(--space-3); right: auto; width: 100px; }
+.ws-settings::after { left: var(--space-3); right: auto; width: var(--ornament-lattice-width); height: var(--ornament-lattice-height); }
 .ws-listpanel { --panel-ornament: url("../../assets/ornaments/plum-branch.png"); }
 .ws-view { --panel-ornament: url("../../assets/ornaments/sprig.svg"); }
-.ws-view::after { width: 90px; }
+.ws-view::after { width: var(--ornament-sprig-width); }
 @media (min-width: 721px) {
   .ws-settings { position: sticky; }
 }
@@ -531,7 +531,7 @@
   .ws-view { position: sticky; }
 }
 @media (max-width: 720px) {
-  .ws-panel::after { height: 36px; max-width: 112px; }
+  .ws-listpanel::after { width: var(--ornament-mobile-width); }
 }
 @media (forced-colors: active) {
   .ws-panel::before, .ws-panel::after { display: none; }

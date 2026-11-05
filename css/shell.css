@@ -313,11 +313,11 @@ ins.adsbygoogle, .google-auto-placed {
   position: absolute;
   inset-inline: var(--space-5);
   bottom: var(--space-3);
-  height: 12px;
+  height: var(--ornament-band-height);
   background: var(--ornament-ink);
   opacity: var(--ornament-opacity);
-  -webkit-mask: url("../assets/ornaments/meander.svg") left center / 32px 12px repeat-x;
-  mask: url("../assets/ornaments/meander.svg") left center / 32px 12px repeat-x;
+  -webkit-mask: url("../assets/ornaments/meander.svg") left center / var(--ornament-band-width) var(--ornament-band-height) repeat-x;
+  mask: url("../assets/ornaments/meander.svg") left center / var(--ornament-band-width) var(--ornament-band-height) repeat-x;
   pointer-events: none;
   z-index: -1;
 }
