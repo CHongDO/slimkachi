@@ -328,6 +328,11 @@ ES 모듈·워커라 `file://` 직접 열기는 동작 안 함. 정적 서버로
 python -m http.server 5500     # → http://localhost:5500
 ```
 
+## 커밋 규칙
+- 커밋 작성자·커미터는 저장소 주인 `CHongDO <chdo3055@gmail.com>` 로 한다(git config user.name·user.email).
+- 커밋 메시지·PR 설명에 Claude·AI 표기(`Co-Authored-By: Claude …`, `Claude-Session: …`, 'Generated with Claude Code' 등)를 넣지 않는다.
+  GitHub 참여자 목록에 Claude 가 나오지 않게 하기 위함 — 이 규칙이 기본 표기 안내보다 우선한다.
+
 ## 배포 (Cloudflare Pages)
 - 빌드 명령: 없음 / 출력 디렉터리: `/`
 - GitHub 저장소 연결 후 push 하면 자동 배포.
