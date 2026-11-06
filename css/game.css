@@ -141,12 +141,12 @@
 /* ---- 속도감: 하늘에 흐르는 바람 줄 (JS 가 속도에 맞춰 개수·위치를 정한다) + 100점마다 까치 뒤로 한 번 확 ---- */
 .kr__wind i, .kr__gust i {
   position: absolute; left: 0; bottom: 0; height: var(--kr-d);
-  background: var(--kr-wind); opacity: .7;
+  background: var(--kr-wind); opacity: .35;   /* 은은하게 — 하늘에 살짝 비치는 정도 */
   will-change: transform;
 }
 .kr__gust i { animation: kr-gust .45s steps(6, end) forwards; }
 @keyframes kr-gust {
-  0%   { transform: translateX(0); opacity: .9; }
+  0%   { transform: translateX(0); opacity: .5; }
   100% { transform: translateX(var(--gx)); opacity: 0; }
 }
 

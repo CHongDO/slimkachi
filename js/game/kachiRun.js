@@ -283,7 +283,7 @@ function createGame() {
       }
       if (!l.on && i < want) {
         l.on = true;
-        l.len = rnd(WIND.len[0], WIND.len[1]);
+        l.len = Math.round(rnd(WIND.len[0], WIND.len[1]) * (1 + WIND.stretch * windFast(w)));   // 빠를수록 길게
         l.y = rnd(WIND.y[0], WIND.y[1]);
         l.x = cells + rnd(0, Math.round(cells * 0.6));      // 화면 오른쪽 밖에서 흩어져 들어온다
       }
@@ -293,6 +293,10 @@ function createGame() {
       if (width !== l.shownW) { l.shownW = width; l.el.style.width = width; }
       place(l.el, l.x, l.y);
     });
+  }
+  /** 바람 줄이 나오기 시작하는 속도 0 ~ 최고 속도 1 */
+  function windFast(w) {
+    return Math.max(0, Math.min(1, (w.speed - WIND.from) / (SPEED.max - WIND.from)));
   }
   function clearWind() {
     for (const l of winds) { l.on = false; l.el.hidden = true; }

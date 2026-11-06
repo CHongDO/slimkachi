@@ -181,7 +181,7 @@ robots.txt sitemap.xml        SEO
   부딪히면 갓 쓴 까치 = 갓(H·S)이, 선비 까치 = 두루마리(E·R·S)가 말림→반쯤→활짝(sprites.js SCROLL_HALF·OPEN) 펼쳐지며 뒤로 떨어진다. 0.9초 뒤 '다시'.
   고른 까치 'kachirun-bird', 최고 기록 'kachirun-best-gat'·'kachirun-best-seonbi'(옛 'kachirun-best' 는 갓 쓴 까치 기록으로 읽음).
 - 판정은 칸 단위 마스크(갓 쓴 까치 그늘·갓끈, 꼬리 끝 4칸, 연줄 제외).
-- 속도감(config WIND): 160칸/초를 넘으면 하늘에 가로 바람 줄(--kr-wind, 최고 속도에서 10개, 땅의 1.8배 속도), 자갈 길이 +최대 3칸
+- 속도감(config WIND): 160칸/초를 넘으면 하늘에 가로 바람 줄(--kr-wind 불투명도 .35로 은은하게, 최고 속도에서 10개, 땅의 2.6배 속도, 길이 최대 2배), 자갈 길이 +최대 3칸
   (VIEW.pebbleStretch), 착지 먼지 뒤로 최대 2.5배(DUST.stretch). 100점마다 점수 깜빡임 + 까치 뒤로 바람 줄 5개 한 번(.kr__gust).
   모션 줄이기면 바람 줄·돌풍 없음. 좁은 폰(속도 제한 160 미만)에서는 바람 줄이 안 나온다.
 - WorkerPool.anyBusy() 면 30fps. visibilitychange·blur 면 일시정지. 모션 줄이기 = 대기 화면 안내(kr.009)만, 대기 깡총 애니메이션·착지 먼지 없음.
