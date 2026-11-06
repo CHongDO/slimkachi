@@ -12,6 +12,8 @@
    · 탭이 숨겨지거나 창이 포커스를 잃으면 일시정지. Esc 또는 [작업실로 돌아가기]로 닫는다.
    · 모션 줄이기 설정이면 대기 화면에 안내만 하고 움직이지 않는다(누르면 그때 시작). 착지 먼지도 만들지 않는다.
    · 칸 배율: 4 → 3 → 2 중 '최고 속도에서도 반응 시간(VIEW.reactTime)을 지키는' 가장 큰 것. 2 로도 안 되면 rules 가 최고 속도를 낮춘다.
+   · 속도감: 속도가 WIND.from 을 넘으면 하늘에 가로 바람 줄이 흐르고(빠를수록 많이), 자갈·착지 먼지가 속도에 비례해 길어진다.
+     100점마다 점수판 깜빡임과 함께 까치 뒤로 바람 줄이 한 번 확 지나간다. 모션 줄이기면 바람 줄은 모두 끈다.
    · DAYNIGHT.at 점수에 게임 화면 안에서만 낮/밤을 한 번 바꾼다(<html data-mode> 만 잠시 바꾸고 저장값 ft-mode 는 건드리지 않음).
      판이 끝나 '다시' 안내가 뜰 때, 새 판을 시작할 때, 게임을 닫을 때 원래 모드로 돌린다.
    ============================================================ */
@@ -22,7 +24,7 @@ import { WorkerPool } from '../shared/workerPool.js';
 import { GRASS_SURFACE } from '../magpie.js';
 import { OBSTACLES, KITE_SPRITE, BIRDS, BIRD_NAMES, CLS, gridSvg } from './sprites.js';
 import { createWorld, resize, step, kiteBob, reactTimeAt, STEP } from './rules.js';
-import { SPEED, CRASH, DUST, VIEW } from './config.js';
+import { SPEED, CRASH, DUST, VIEW, WIND } from './config.js';
 
 const BIRD_KEY = 'kachirun-bird';
 const BEST_KEY = (name) => `kachirun-best-${name}`;
@@ -82,6 +84,8 @@ function createGame() {
   el.hidden = true;
   el.innerHTML = `
     <div class="kr__field" aria-hidden="true">
+      <div class="kr__wind">${'<i hidden></i>'.repeat(WIND.max)}</div>
+      <div class="kr__gust"></div>
       <div class="kr__obs"></div>
       <div class="kr__dust"></div>
       <div class="kr__spr kr__piece" hidden></div>
@@ -106,7 +110,11 @@ function createGame() {
   const scoreBox = $('.kr__score'), nowEl = $('.kr__now'), bestEl = $('.kr__best');
   const pebbles = [...el.querySelectorAll('.kr__soil i')].map((p, i) => ({
     el: p, x: (i * 97 + 31) % 400, top: 2 + ((i * 7) % 5) * 2,   // 칸 단위 (보기 좋게 흩어 둔 고정 배치)
+    base: i % 3 === 0 ? 2 : 1, shownW: '',                        // 기본 길이(칸) — 빨라지면 늘어난다
   }));
+  const gustBox = $('.kr__gust');
+  const winds = [...el.querySelectorAll('.kr__wind i')].map((n) => ({ el: n, on: false, x: 0, y: 0, len: 0, shownW: '' }));
+  let windDist = 0;               // 바람 줄을 마지막으로 옮긴 때의 달린 거리
 
   let state = 'closed';         // wait · run · paused · over · closed
   let world = null, d = 4, cells = 400, visible = 400;
@@ -224,13 +232,73 @@ function createGame() {
     }
     for (const [id, node] of obsEls) if (!alive.has(id)) { node.remove(); obsEls.delete(id); }
 
-    // 흙 위 자갈: 달린 거리만큼 왼쪽으로 (화면 폭을 넘으면 오른쪽에서 다시)
+    // 흙 위 자갈: 달린 거리만큼 왼쪽으로 (화면 폭을 넘으면 오른쪽에서 다시). 빠를수록 길게 늘어진다
     const span = cells + 8;
+    const extra = Math.round(VIEW.pebbleStretch * fast(w));
     for (const p of pebbles) {
       const x = ((((p.x - w.dist) % span) + span) % span) - 4;
       p.el.style.transform = `translate(${Math.round(x * d)}px, ${p.top * d}px)`;
+      const width = `${(p.base + extra) * d}px`;
+      if (width !== p.shownW) { p.shownW = width; p.el.style.width = width; }
     }
+    drawWind(w);
     showScore(w.score);
+  }
+
+  /** 시작 속도 0 ~ 최고 속도 1 */
+  function fast(w) {
+    return Math.max(0, Math.min(1, (w.speed - SPEED.start) / (SPEED.max - SPEED.start)));
+  }
+
+  /* 바람 줄: 속도가 WIND.from 을 넘으면 개수가 속도에 비례해 늘어난다. 땅보다 WIND.speed 배 빨리 흐르고,
+     왼쪽으로 다 나가면 오른쪽에서 새 높이·길이로 다시. 줄 수가 줄면 남은 줄은 마저 지나간 뒤 사라진다 */
+  function drawWind(w) {
+    const moved = Math.max(0, w.dist - windDist) * WIND.speed;
+    windDist = w.dist;
+    const want = still.matches || w.speed <= WIND.from ? 0
+      : Math.ceil(WIND.max * Math.min(1, (w.speed - WIND.from) / (SPEED.max - WIND.from)));
+    const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+    winds.forEach((l, i) => {
+      if (l.on) {
+        l.x -= moved;
+        if (l.x + l.len < 0) l.on = false;
+      }
+      if (!l.on && i < want) {
+        l.on = true;
+        l.len = rnd(WIND.len[0], WIND.len[1]);
+        l.y = rnd(WIND.y[0], WIND.y[1]);
+        l.x = cells + rnd(0, Math.round(cells * 0.6));      // 화면 오른쪽 밖에서 흩어져 들어온다
+      }
+      l.el.hidden = !l.on;
+      if (!l.on) return;
+      const width = `${l.len * d}px`;
+      if (width !== l.shownW) { l.shownW = width; l.el.style.width = width; }
+      place(l.el, l.x, l.y);
+    });
+  }
+  function clearWind() {
+    for (const l of winds) { l.on = false; l.el.hidden = true; }
+    windDist = world ? world.dist : 0;
+    gustBox.textContent = '';
+  }
+
+  /* 100점마다: 까치 몸 높이에서 바람 줄 몇 개가 뒤(왼쪽)로 한 번 확 지나간다 */
+  function gust() {
+    if (still.matches) return;
+    const b = world.bird;
+    for (let i = 0; i < WIND.gust; i++) {
+      const n = document.createElement('i');
+      const len = 6 + ((i * 5) % 9);
+      const x = world.birdX + 4 + ((i * 7) % 12);
+      n.style.width = `${len * d}px`;
+      n.style.left = `${x * d}px`;
+      n.style.bottom = `${(Math.round(b.y) + 2 + i * 3) * d}px`;
+      n.style.setProperty('--gx', `${-(x + len + 8) * d}px`);
+      n.style.animationDuration = `${WIND.gustTime}s`;
+      n.style.animationDelay = `${(i % 3) * 0.04}s`;
+      gustBox.appendChild(n);
+      setTimeout(() => n.remove(), (WIND.gustTime + 0.15) * 1000);
+    }
   }
 
   function showScore(n) {
@@ -238,7 +306,8 @@ function createGame() {
     if (best[birdName] !== shownBest) { shownBest = best[birdName]; bestEl.textContent = pad(shownBest); }
   }
 
-  function blink() {   // 100점마다 점수가 몇 번 깜빡인다 (모션 줄이기면 CSS 가 끈다)
+  function blink() {   // 100점마다 점수가 몇 번 깜빡인다 (모션 줄이기면 CSS 가 끈다) + 바람 줄 한 번
+    gust();
     scoreBox.classList.remove('is-blink');
     void scoreBox.offsetWidth;
     scoreBox.classList.add('is-blink');
@@ -246,15 +315,16 @@ function createGame() {
     blinkTimer = setTimeout(() => scoreBox.classList.remove('is-blink'), 1000);
   }
 
-  /* 착지: 발밑에서 먼지 2~3개가 양옆으로 튄다 (모션 줄이기면 없음) */
+  /* 착지: 발밑에서 먼지 2~3개가 양옆으로 튄다 (모션 줄이기면 없음). 빠를수록 뒤로 길게 튄다 */
   function dust() {
     if (still.matches) return;
     const fx = (world.birdX + BIRDS[world.birdName].foot) * d;
+    const back = 1 + DUST.stretch * fast(world);                // 뒤(왼쪽)로 튀는 거리 배수
     for (let i = 0; i < DUST.count; i++) {
       const p = document.createElement('i');
       const dir = i === 0 ? -1 : i === 1 ? 1 : -2;               // 왼쪽 · 오른쪽 · 왼쪽 멀리
       p.style.left = `${fx + dir * d}px`;
-      p.style.setProperty('--dx', `${dir * 2 * d}px`);
+      p.style.setProperty('--dx', `${Math.round(dir * 2 * (dir < 0 ? back : 1)) * d}px`);
       p.style.setProperty('--dy', `${-(i === 2 ? 1 : 2) * d}px`);
       p.style.animationDuration = `${DUST.life}s`;
       dustBox.appendChild(p);
@@ -301,6 +371,7 @@ function createGame() {
     for (const node of obsEls.values()) node.remove();
     obsEls.clear();
     dustBox.textContent = '';
+    clearWind();
   }
 
   function toWait() {

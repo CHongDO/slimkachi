@@ -1326,6 +1326,12 @@ function template(lim) {
       </ol>
     </header>
 
+    <div class="ws-hero">
+      <h2 class="ws-hero__title">${tx('ws.187')}</h2>
+      <p class="ws-hero__lead">${tx('ws.188')}</p>
+      <p class="ws-hero__note">${tx('ws.189')}</p>
+    </div>
+
     <div class="ws-drop" tabindex="0" role="button" aria-label="${tx('ws.142')}">
       <div class="ws-drop__inner">
         <span class="ws-drop__icon">${icon('upload', 30)}</span>

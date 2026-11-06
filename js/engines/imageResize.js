@@ -7,6 +7,8 @@
    - target  : 목표 용량 이하로. ① 해상도 그대로 품질을 낮춰 보고
                ② 그래도 안 되거나 화질 기준을 못 넘으면 해상도를 단계적으로 줄여,
                목표 이하이면서 화질이 가장 좋은(해상도가 가장 큰) 결과를 고른다.
+               ③ 화질 하한 우선: 긴 변 MIN_EDGE 까지 줄여도 기준(TARGET_MODE)을 넘으며 목표에 못 맞으면
+               억지로 맞추지 않고, 하한에서 멈춘 결과 + '목표보다 큼' 경고 + 대안(해상도·형식)을 돌려준다.
    원본보다 크게 늘리지 않는다(업스케일 금지).
    resizeImage(file, { method, percent | width,height,keepRatio | targetBytes, format, mode, bg }, ctx)
    mode(size/balanced/quality)는 비율·픽셀 방식에서 저장 화질 기준으로 쓴다(없으면 balanced).
@@ -26,7 +28,7 @@ import { t as tx } from '../i18n/index.js';
 const RESIZE_MODE = 'balanced';          // 크기만 바꿀 때 기본 저장 화질 기준 (눈에 띄는 손상 없음)
 const TARGET_MODE = 'size';              // 목표 용량 모드에서 '이 정도면 괜찮다'로 보는 기준
 const REF_Q = { jpeg: 75, webp: 75, avif: 55 };    // 목표 용량 모드에서 다음 해상도를 어림할 때 쓰는 품질
-const GATE_MIN_EDGE = 640;               // 긴 변이 이 이하면 화질 기준을 못 넘어도 목표에 맞춘 결과를 채택
+const MIN_EDGE = 640;                    // 목표 용량을 맞추려고 해상도를 이 아래(긴 변 px)로는 줄이지 않는다 (원본이 더 작으면 원본 크기)
 const MAX_STEPS = 14;
 
 export async function resizeImage(file, o, ctx) {
@@ -65,6 +67,10 @@ export async function resizeImage(file, o, ctx) {
       const r = format === 'png'
         ? await fitTargetPng(source, T, ctx)
         : await fitTargetLossy(source, type, format, T, ctx, bg);
+      // 하한에서 멈춘 결과가 같은 형식 원본보다도 크면 원본 유지 (경고·대안은 그대로 보여 준다)
+      if (r.overTarget && same && r.size >= (lightest || src).length) {
+        return keep(type, src.length, lightest, { width: W, height: H, ...orig }, r.note, { targetBytes: T, warn: r.warn });
+      }
       return conv({ ...r, ...orig, targetBytes: T });
     }
 
@@ -134,9 +140,13 @@ async function encodeResized(img, srcType, format, origSize, ctx, mode, bg) {
   let quality = found ? found.quality : QUALITY_RANGE[format][1];
   let note = '';
   // 같은 형식인데 크기를 줄였더니 오히려 커졌다면(원본이 강하게 압축된 경우) 원본 용량 아래로 맞춘다
+  // (화질 하한 우선: 맞춘 결과가 하한(TARGET_MODE 기준)을 못 넘으면 쓰지 않는다)
   if (format === srcType && bytes.length >= origSize) {
     const fit = await fitUnder(format, img, Math.floor(origSize * 0.97), mode, { hi: quality });
-    if (fit) { bytes = fit.bytes; quality = fit.q; note = tx('rsz.010'); }
+    const floor = targetFor(TARGET_MODE, img);
+    if (fit && passes(await score(format, img, fit.bytes, opaque, floor.scale), floor.target)) {
+      bytes = fit.bytes; quality = fit.q; note = tx('rsz.010');
+    }
   }
   const s = await score(format, img, bytes, opaque, scale);
   return packResult('lossy', bytes, format, { quality, ssim: s.mean, ssimLow: s.low, note, filled });
@@ -178,22 +188,21 @@ async function fitTargetLossy(source, srcType, format, T, ctx, bg) {
     return out;
   }
 
-  let s = 1, failedAt = null, accepted = null, fallback = null;
+  const minS = Math.min(1, MIN_EDGE / Math.max(W, H));   // 해상도 하한 배율
+  let s = 1, failedAt = null, accepted = null;
   for (let i = 0; i < MAX_STEPS; i++) {
     const t = await tryScale(s);
-    const longEdge = Math.max(t.w, t.h);
-    if (t.fit && (t.ok || longEdge <= GATE_MIN_EDGE)) { accepted = t; break; }
-    if (t.fit && !fallback) fallback = t;
-    if (longEdge <= 16) break;
+    if (t.fit && t.ok) { accepted = t; break; }
+    if (s <= minS) break;                                 // 해상도 하한까지 왔다
     failedAt = s;
     // 다음 배율 어림: 기준 품질(qRef)에서 목표에 맞을 만큼 (용량 ≈ 화소 수에 비례)
     let ratio = Math.sqrt(T / t.refSize) * 0.97;
     if (!(ratio < 0.92)) ratio = 0.85;
-    s *= Math.max(0.25, ratio);
+    s = Math.max(minS, s * Math.max(0.25, ratio));
   }
 
-  if (!accepted && fallback) accepted = fallback;
-  if (!accepted) throw new Error(tx('rsz.013'));
+  // 화질 하한 우선: 하한을 지키며 목표에 못 맞으면 억지로 맞추지 않고 하한에서 멈춘 결과를 돌려준다
+  if (!accepted) return floorResult(source, srcType, format, minS, bg, ctx);
 
   // 실패한 배율과 채택한 배율 사이를 좁혀 더 큰 해상도를 노린다
   if (accepted.ok && failedAt) {
@@ -211,7 +220,26 @@ async function fitTargetLossy(source, srcType, format, T, ctx, bg) {
     width: accepted.w, height: accepted.h, quality: accepted.fit.quality,
     ssim: accepted.fit.ssim, ssimLow: accepted.fit.ssimLow, filled: accepted.filled,
     note: notes.join(' · '),
-    warn: accepted.ok ? '' : tx('rsz.016'),
+  });
+}
+
+/**
+ * 목표를 못 맞출 때: 해상도 하한(배율 s)에서 화질 하한(TARGET_MODE 기준)을 통과하는 가장 작은 품질로 저장.
+ * 통과하는 품질이 없으면 최고 품질. 결과는 목표보다 크다 → overTarget + 경고 + 대안 안내.
+ */
+async function floorResult(source, srcType, format, s, bg, ctx) {
+  const w = Math.max(1, Math.round(source.width * s)), h = Math.max(1, Math.round(source.height * s));
+  const img = await resizeTo(source, w, h);
+  const { opaque, filled } = prepareForFormat(img, srcType, format, bg);
+  const { target, scale } = targetFor(TARGET_MODE, img);
+  const report = (label, f) => ctx.progress(label, 0.9 + 0.08 * f);
+  const found = await searchQuality(format, img, TARGET_MODE, target, opaque, scale, report);
+  const quality = found ? found.quality : QUALITY_RANGE[format][1];
+  const bytes = found ? found.bytes : await encode(format, img, quality, TARGET_MODE);
+  const sc = found ? { mean: found.ssim, low: found.ssimLow } : await score(format, img, bytes, opaque, scale);
+  return packResult('lossy', bytes, format, {
+    width: w, height: h, quality, ssim: sc.mean, ssimLow: sc.low, filled,
+    overTarget: true, warn: tx('rsz.018'), note: tx('rsz.019'),
   });
 }
 
@@ -227,15 +255,22 @@ async function fitTargetPng(source, T, ctx) {
     const bytes = await optimisePng(img, w * h > 2_000_000 ? 1 : 2);
     return { s, w, h, bytes };
   }
+  const minS = Math.min(1, MIN_EDGE / Math.max(W, H));   // 해상도 하한 배율
   let s = 1, failedAt = null, accepted = null, last = null;
   for (let i = 0; i < MAX_STEPS; i++) {
     last = await tryScale(s);
     if (last.bytes.length <= T) { accepted = last; break; }
-    if (Math.max(last.w, last.h) <= 16) break;
+    if (s <= minS) break;
     failedAt = s;
-    s *= Math.max(0.25, Math.min(0.92, Math.sqrt(T / last.bytes.length) * 0.97));
+    s = Math.max(minS, s * Math.max(0.25, Math.min(0.92, Math.sqrt(T / last.bytes.length) * 0.97)));
   }
-  if (!accepted) throw new Error(tx('rsz.013'));
+  // 해상도 하한까지 줄여도 안 맞으면 거기서 멈춘다 (억지로 더 줄이지 않음)
+  if (!accepted) {
+    return packResult('lossless', last.bytes, 'png', {
+      width: last.w, height: last.h, ssim: 1,
+      overTarget: true, warn: tx('rsz.018'), note: tx('rsz.020', { n: MIN_EDGE }),
+    });
+  }
   if (failedAt) {
     let lo = accepted.s, hi = failedAt;
     for (let k = 0; k < 3 && hi / lo > 1.05; k++) {

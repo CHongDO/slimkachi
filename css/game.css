@@ -133,6 +133,18 @@
           drop-shadow(0 calc(-1 * var(--px)) 0 var(--kr-rim));
 }
 
+/* ---- 속도감: 하늘에 흐르는 바람 줄 (JS 가 속도에 맞춰 개수·위치를 정한다) + 100점마다 까치 뒤로 한 번 확 ---- */
+.kr__wind i, .kr__gust i {
+  position: absolute; left: 0; bottom: 0; height: var(--kr-d);
+  background: var(--kr-wind); opacity: .7;
+  will-change: transform;
+}
+.kr__gust i { animation: kr-gust .45s steps(6, end) forwards; }
+@keyframes kr-gust {
+  0%   { transform: translateX(0); opacity: .9; }
+  100% { transform: translateX(var(--gx)); opacity: 0; }
+}
+
 /* ---- 착지 먼지: 발밑에서 양옆 위로 튀었다 사라진다 (한 칸씩, steps) ---- */
 .kr__dust i {
   position: absolute; bottom: 0; width: var(--kr-d); height: var(--kr-d);
@@ -165,7 +177,7 @@
   width: var(--kr-d); height: var(--kr-d); background: var(--kr-pebble);
   will-change: transform;
 }
-.kr__soil i:nth-child(3n + 1) { width: calc(2 * var(--kr-d)); }
+/* 길이는 JS 가 속도에 맞춰 늘인다(기본 1칸, 셋째마다 2칸) */
 
 /* ---- 좁은 화면 ---- */
 @media (max-width: 720px) {

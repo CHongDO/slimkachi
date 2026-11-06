@@ -16,7 +16,7 @@
 }
 
 /* ---- 픽셀 테두리 공통 (작업실 요소) ---- */
-.ws-head, .ws-panel, .ws-drop__msg, .ws-seg__opt span, .ws-chip, .ws-item, .ws-item__thumb,
+.ws-head, .ws-hero, .ws-panel, .ws-drop__msg, .ws-seg__opt span, .ws-chip, .ws-item, .ws-item__thumb,
 .ws-badge, .ws-view__status, .ws-cmp__viewport, .ws-note {
   --bw: var(--line); --bc: var(--frame); --drop: 0 0 0 0 transparent;
   border: 0; border-radius: 0;
@@ -34,6 +34,24 @@
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4);
 }
 .ws-title { margin: 0; font-size: var(--font-size-h); line-height: 1.5; }
+
+/* ---- 소개 문구: 제목 + 한 줄 설명 + 서버 전송 없음 (카드) ---- */
+.ws-hero {
+  --bw: var(--px); --drop: var(--shadow-pixel);
+  background: var(--surface-1);
+  padding: var(--space-4);
+  text-align: center;
+  word-break: keep-all; overflow-wrap: anywhere;   /* 한국어 낱말 중간에서 끊지 않게 */
+  text-wrap: balance;                              /* 좁은 화면에서 줄 길이를 고르게 */
+}
+.ws-hero__title { margin: 0 0 var(--space-2); font-size: var(--font-size-h); line-height: 1.5; color: var(--text); }
+.ws-hero__lead { margin: 0 0 var(--space-1); color: var(--text-secondary); }
+.ws-hero__note {
+  margin: 0; color: var(--text-muted);
+  font-family: var(--font-bold); font-weight: 700; font-size: var(--font-size-xs); line-height: 1.5;
+}
+/* 일본어: Galmuri11 Bold 에 가나가 없어 12px 이면 Galmuri14 가 번지므로 본문 글꼴 15px */
+:root[lang="ja"] .ws-hero__note { font-family: var(--font-ui); font-weight: 400; font-size: var(--font-size); }
 
 /* 사용 순서 ①→⑤ */
 .ws-steps {
@@ -446,6 +464,7 @@
   .ws { gap: var(--space-4); }
   .ws-grid { gap: var(--space-5); }
   .ws-head { padding: var(--space-2) var(--space-3); }
+  .ws-hero { padding: var(--space-3); }
   .ws-drop { padding: var(--space-4) var(--space-3); }
   .ws-panel { padding: var(--space-3); }
   .ws-item__thumb { width: 44px; height: 44px; }

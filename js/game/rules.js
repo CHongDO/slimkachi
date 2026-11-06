@@ -8,7 +8,8 @@
    · 공중 = 날갯짓 4프레임(활강 중은 활강 프레임), 땅 = 서기 ↔ 깡총.
    · 장애물 간격 ≥ 그 속도에서 '꾹 눌러 뛴 거리'(활강 없이) → 어떤 배치든 짧게·길게 뛰어 피할 수 있다.
    · 방패연은 까치 머리보다 위로 날아온다(달리면 아래로 지나감, 뛰면 걸림). '짧게 뛰어 넘을 장애물 바로 뒤'에 오는 쌍은
-     짧게 뛰고 착지하면 아래로 지나가지만 길게 날거나 활강하면 걸린다. 800점부터 쌍이 늘고 단독 연 높이가 세 가지.
+     짧게 뛰고 착지하면 아래로 지나가지만 길게 날거나 활강하면 걸린다. KITE.late.from 점수부터 쌍이 늘고 단독 연 높이가 세 가지.
+   · 붙은 장애물 두 개(CLUSTER): 작은 장애물 둘 — 전체 폭을 속도 × spanTime 에 맞춰 톡 점프로는 못 넘고 꾹 점프로 넘게.
    · 같은 땅 장애물은 OBSTACLE.maxRepeat 번까지만 연속.
    · 반응 시간: 장애물이 화면 오른쪽 끝에 보인 뒤 까치에 닿기까지 VIEW.reactTime 초 이상 — 화면이 좁아 못 지키면
      그 폭에 맞춰 최고 속도를 낮춘다(speedCap). 화면 쪽은 먼저 칸 배율을 줄여 넓게 보여 준다(reachCells 로 확인).
@@ -16,7 +17,7 @@
    · 부딪히면 까치마다 다른 조각이 떨어진다: 갓 쓴 까치 = 갓, 선비 까치 = 두루마리(화면 쪽이 펼쳐지는 그림으로).
    ============================================================ */
 
-import { STEP, SPEED, JUMP, GLIDE, ANIM, SCORE, OBSTACLE, KITE, DAYNIGHT, CRASH, VIEW } from './config.js';
+import { STEP, SPEED, JUMP, GLIDE, ANIM, SCORE, OBSTACLE, CLUSTER, KITE, DAYNIGHT, CRASH, VIEW } from './config.js';
 import { OBSTACLES, KITE_SPRITE, BIRDS, maskOf } from './sprites.js';
 
 export { STEP };
@@ -133,10 +134,26 @@ function spawn(w) {
   const tier = w.score < t1 ? 0 : w.score < t2 ? 1 : 2;
   const x = w.width + OBSTACLE.spawnAhead;
 
+  // 자리마다 한 번 굴려 [연 쌍 | 단독 연 | 붙은 두 개 | 보통 땅 장애물] 중 하나
+  const kiteOn = w.score >= KITE.from;
   const late = w.score >= KITE.late.from;
-  const r = w.score >= KITE.from ? w.rand() : 1;
-  const pairP = late ? KITE.late.pair : KITE.pair;
-  if (r < pairP + KITE.lone) {
+  const pairP = kiteOn ? (late ? KITE.late.pair : KITE.pair) : 0;
+  const loneP = kiteOn ? KITE.lone : 0;
+  const clusterP = w.score >= CLUSTER.from ? CLUSTER.p : 0;
+  const r = w.rand();
+  if (r >= pairP + loneP && r < pairP + loneP + clusterP) {
+    // 붙은 두 개: 전체 폭(첫 장애물 왼쪽 끝 ~ 둘째 오른쪽 끝) = 속도 × spanTime − 까치 판정 폭
+    const small = KINDS.filter((o) => CLUSTER.kinds.includes(o.name));
+    const a = pickGround(w, small);
+    addGround(w, a, x);
+    const b = pickGround(w, small);
+    const span = w.speed * CLUSTER.spanTime - CLUSTER.birdHit;
+    const between = Math.max(CLUSTER.minGap, Math.round(span - a.mask.w - b.mask.w));
+    addGround(w, b, x + a.mask.w + between);
+    w.gap = nextGap(w, b.mask.w * 0.5);
+    return;
+  }
+  if (r < pairP + loneP) {
     if (r < pairP) {
       // 짧게 뛰어 넘을 장애물 + 그 뒤 활강 높이로 오는 연.
       // 연이 까치 앞에 닿는 때 = 장애물이 까치를 다 지나간 때 + 짧은 점프 체공 절반 + 여유 (연은 KITE.speed 배 빠르다)
