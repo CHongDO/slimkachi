@@ -14,15 +14,16 @@
    · 두 마리가 같은 자리에 앉지 않게 착지 자리(왼쪽·오른쪽 여백)를 예약한다. 화면에는 최대 2마리.
    · 밤 모드·모션 줄이기에서는 만들지도 날지도 않는다. 날던 중 밤이 되면 바로 사라진다.
    · 테스트용: 첫 비행은 갓 쓴 까치 3~5초, 선비 까치 11~13초 뒤(시차), 둘 다 가능하면 착지 (first, firstLands).
+   · 까치런(js/game/)이 갓 쓴 까치 그림(SPECIES·CLS)과 풀 면 높이(GRASS_SURFACE)를 그대로 가져다 쓴다.
    ============================================================ */
 
 const W = 24, H = 16;
 const LAND_CHANCE = 1 / 3;
 const GAP_S = { wide: [20, 40], small: [40, 80] };
-const GRASS_SURFACE = 20;   // 땅 띠 위에서 풀 면(빈틈없는 줄)까지: grass.svg 5줄째 × 4px — 발 밑이 여기에 닿는다
+export const GRASS_SURFACE = 20;   // 땅 띠 위에서 풀 면(빈틈없는 줄)까지: grass.svg 5줄째 × 4px — 발 밑이 여기에 닿는다
 
 /* 칸 종류: K 검정(머리·등·꼬리·다리) · H 갓 · S 갓끈 · B 날개 푸른 광택 · W 흰 배·눈 · G 배 아래 그늘 */
-const CLS = { K: 'k', H: 'h', S: 's', B: 'b', W: 'w', G: 'g' };
+export const CLS = { K: 'k', H: 'h', S: 's', B: 'b', W: 'w', G: 'g' };
 const EMPTY = '........................';
 
 /* 날 때 몸 (날개는 아래 덮어쓰기) */
@@ -184,7 +185,7 @@ const SB_STAND = [
 const SB_HOP = [...SB_STAND.slice(0, 14), '....KK..................', '....KK..................'];   // 다리를 접고 뜬 모습
 
 /* 띠 순서 = CSS 의 프레임 번호: 0~3 날갯짓 · 4 활강 · 5 서기 · 6 쪼기 · 7 깡총 */
-const SPECIES = {
+export const SPECIES = {
   gat: {
     cls: CLS,
     frames: [flying('up'), flying('mid'), flying('down'), flying('mid'), flying('glide'), STAND, PECK, HOP],

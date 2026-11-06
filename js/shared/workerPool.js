@@ -7,6 +7,8 @@
 
 import { getLang } from '../i18n/index.js';
 
+const live = new Set();   // 지금 살아 있는 풀 (까치런이 '처리 중이면 30fps' 를 판단할 때 본다)
+
 export class WorkerPool {
   /**
    * @param {URL} url 워커 모듈 주소
@@ -21,6 +23,13 @@ export class WorkerPool {
     this.onCrash = onCrash;
     this.slots = [];
     this.queue = [];
+    live.add(this);
+  }
+
+  /** 어느 풀이든 대기·실행 중인 작업이 있는지 (사진·PDF·문서 처리, 썸네일 포함) */
+  static anyBusy() {
+    for (const p of live) if (p.busy()) return true;
+    return false;
   }
 
   /** 기기 코어 수에 맞춘 기본 크기 (큰 사진은 메모리를 많이 써서 최대 2개) */
@@ -86,5 +95,6 @@ export class WorkerPool {
     this.queue = [];
     this.slots.forEach((s) => s.w.terminate());
     this.slots = [];
+    live.delete(this);
   }
 }

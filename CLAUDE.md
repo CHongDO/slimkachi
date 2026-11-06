@@ -96,6 +96,12 @@ js/shared/                    공용 코드
                               + 무손실 메타데이터 제거 (JPEG/PNG/WebP)
     decoders.js               브라우저가 못 여는 형식 전용 디코더 (지연 로딩): HEIC = libheif-js 1.19.8(LGPL, .mjs 별도 파일),
                               TIFF = UTIF.js 3.1.0(MIT) + pako 1.0.11(MIT) — 일반 스크립트라 받아서 실행. 회전값 반영
+js/game/                      ★ 까치런(미니게임) — 헤더 [까치런] 버튼을 처음 누를 때만 import() (appHost.js)
+  kachiRun.js                 화면: 입력(스페이스·↑·터치)·까치 고르기·그리기(인라인 SVG + transform)·착지 먼지·상태(대기/달리기/일시정지/끝)
+  config.js                   ★ 숫자 모음(속도·점프·활강·간격·방패연·충돌·화면) — 한국어 주석. 조정은 여기서만
+  rules.js                    규칙·물리 (DOM 없음, 고정 간격 1/120초, 칸 단위) — 노드에서 시뮬레이션 가능
+  sprites.js                  칸 그림: 까치 두 마리는 magpie.js SPECIES 재사용(+ 갓·두루마리 조각, 펼쳐진 두루마리), 장독대·돌탑·짚단·방패연은 새로 그림
+css/game.css                  까치런 스타일 (처음 열 때 불러옴). 색 = --magpie-* · --kr-*(theme.css, 밤엔 어둡게)
 pages/                        about / features / privacy (애드센스 심사용)
 robots.txt sitemap.xml        SEO
 ```
@@ -147,6 +153,28 @@ robots.txt sitemap.xml        SEO
   썸네일 워커가 probe.js 로 사진 수·보안 확인 → 보안 문서는 목록에 '처리 불가'로 남고 적용 버튼 잠김.
   설정은 용량 모드만 + '문서 안 사진 N장'. 결과: 용량·감소율·줄인 사진 수 + 가장 큰 사진 하나 전후 비교(result.compare Blob),
   '결과 문서를 한글·오피스에서 열어 확인 · 원본은 따로 보관' 안내. 내보내기 이름 원본이름_min.(같은 확장자).
+
+## 까치런 (미니게임, js/game/)
+- 크롬 공룡 게임 오마주. 그림·이름은 독창적으로(공룡·선인장·익룡 모양·효과음을 흉내 내지 않음). 오마주 문구 = 사전 kr.003·kr.004, about 페이지, README.
+- 열면 `<html data-game>` → .app-shell·광고(ins.adsbygoogle, .google-auto-placed) display:none, 하늘 까치는 visibility:hidden
+  (display:none 이면 animationend 가 안 와서 magpie.js 단계가 멈춤). 작업실 DOM 은 그대로라 파일·압축이 이어진다. Esc·[작업실로 돌아가기]로 복귀(스크롤·포커스 복원).
+- 칸 배율 4→3→2px 중 '최고 속도에서도 반응 시간 1.2초(가장 빠른 방패연 기준, VIEW.reactTime)'를 지키는 가장 큰 것
+  (4 는 화면 높이 560px 이상만). 2px 로도 안 되면 그 폭에 맞춰 최고 속도를 낮춘다(rules.js speedCap — 360px 폰 약 103칸/초).
+  발밑 = .scene__ground 위 + GRASS_SURFACE. **숫자는 모두 js/game/config.js**(한국어 주석):
+  속도 90→198칸/초(0.825칸/초²), 점프 v0 170 · 중력 620(오르며 누르는 동안 300, 최대 0.22초) → 톡 약 25칸(장독대 두 개짜리도 넘음) / 꾹 약 38칸.
+  내려오며 누르고 있으면 활강(낙하 14칸/초까지, 한 점프 0.6초). 공중 = magpie.js 날갯짓 4프레임, 활강 = 활강 프레임, 땅 = 서기↔깡총. 착지 먼지 3개.
+  점수 = 거리×0.1, 150점·550점에 큰 장애물 단계, 350점부터 방패연: 자리마다 단독 연 10%(19·23칸 = 달리면 아래로 지나감)
+  + '짧게 넘을 장애물 + 그 뒤 활강 높이(27칸) 연' 쌍 15% — 짧게 뛰고 착지하면 지나가고, 같은 때 활강하면 약 97% 걸린다.
+  800점부터 쌍 25%, 단독 연 높이 19·23·27칸. 1200점에 게임 화면 안에서만 낮↔밤 한 번(<html data-mode> 만, ft-mode 저장값은 그대로,
+  '다시' 안내·새 판·닫기 때 원래대로). 같은 땅 장애물은 최대 2번 연속(OBSTACLE.maxRepeat, 사이의 연은 셈에서 뺌).
+  장애물 간격 ≥ 그 속도의 꾹 점프 거리(활강 없이, rules.js 가 config 로 계산) — 값을 바꾸면 노드로 봇을 돌려 끝까지 살아남는지 확인할 것.
+- 까치 고르기(대기 화면 ◀ ▶ · ←/→): 갓 쓴 까치 / 선비 까치. 물리는 같고 판정 마스크는 각자 그림.
+  부딪히면 갓 쓴 까치 = 갓(H·S)이, 선비 까치 = 두루마리(E·R·S)가 말림→반쯤→활짝(sprites.js SCROLL_HALF·OPEN) 펼쳐지며 뒤로 떨어진다. 0.9초 뒤 '다시'.
+  고른 까치 'kachirun-bird', 최고 기록 'kachirun-best-gat'·'kachirun-best-seonbi'(옛 'kachirun-best' 는 갓 쓴 까치 기록으로 읽음).
+- 판정은 칸 단위 마스크(갓 쓴 까치 그늘·갓끈, 꼬리 끝 4칸, 연줄 제외).
+- WorkerPool.anyBusy() 면 30fps. visibilitychange·blur 면 일시정지. 모션 줄이기 = 대기 화면 안내(kr.009)만, 대기 깡총 애니메이션·착지 먼지 없음.
+- localStorage 는 모두 try/catch. 루트 class 는 .kachirun (.kr 은 로고 SVG 칸 class 와 겹쳐서 쓰지 않음).
+- 모바일 헤더: 둘째 줄 = [까치런] … [언어 전환] (.app-header::after 로 줄바꿈, row-gap 0).
 
 ## 사진 압축 파이프라인 요약 (engines/imageCompress.js)
 1. 형식 판별 → 메타데이터 무손실 제거 (후보 A)
