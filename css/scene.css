@@ -34,6 +34,16 @@
 .scene > * { position: absolute; left: 0; right: 0; }
 .scene[data-paused] *, .scene[data-paused] *::before, .scene[data-paused] *::after { animation-play-state: paused !important; }
 
+/* 까치런 안 낮↔밤(<html data-mode-fade>, theme.css 끝): 하늘 묶음도 색 변수와 같은 길이·단계로 천천히 */
+:root[data-mode-fade] .scene__day,
+:root[data-mode-fade][data-mode="night"] .scene__night {
+  transition: opacity var(--mode-fade, 3s) steps(var(--mode-steps, 12), end), visibility 0s 0s;
+}
+:root[data-mode-fade] .scene__night,
+:root[data-mode-fade][data-mode="night"] .scene__day {
+  transition: opacity var(--mode-fade, 3s) steps(var(--mode-steps, 12), end), visibility 0s var(--mode-fade, 3s);
+}
+
 /* 패럴랙스 — 정수 px 로만 움직여 도트 가장자리가 번지지 않게 */
 .scene [data-depth] { transform: translate3d(0, calc(var(--y, 0) * -1px), 0); will-change: transform; }
 

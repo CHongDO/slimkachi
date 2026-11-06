@@ -111,6 +111,11 @@
           drop-shadow(0 var(--kr-d) 0 var(--kachi-outline)) drop-shadow(0 calc(-1 * var(--kr-d)) 0 var(--kachi-outline));
 }
 
+/* 낮↔밤 천천히(theme.css data-mode-fade): 밤 외곽선(filter)도 같은 길이로 */
+:root[data-mode-fade] .kr__bird, :root[data-mode-fade] .kr__piece, :root[data-mode-fade] .kr__ob {
+  transition: filter var(--mode-fade, 3s) steps(var(--mode-steps, 12), end);
+}
+
 /* 장애물 색: 옹기 · 돌 · 짚 · 방패연 */
 .kr__ob .od { fill: var(--kr-onggi-edge); }
 .kr__ob .o  { fill: var(--kr-onggi); }

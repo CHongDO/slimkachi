@@ -16,6 +16,7 @@
      100점마다 점수판 깜빡임과 함께 까치 뒤로 바람 줄이 한 번 확 지나간다. 모션 줄이기면 바람 줄은 모두 끈다.
    · DAYNIGHT.at 점수에 게임 화면 안에서만 낮/밤을 한 번 바꾼다(<html data-mode> 만 잠시 바꾸고 저장값 ft-mode 는 건드리지 않음).
      판이 끝나 '다시' 안내가 뜰 때, 새 판을 시작할 때, 게임을 닫을 때 원래 모드로 돌린다.
+     바뀔 때(와 '다시' 안내에서 돌아갈 때)는 DAYNIGHT.fade 초 동안 천천히(<html data-mode-fade>, theme.css), 새 판·닫기는 바로.
    ============================================================ */
 
 import { t as tx } from '../i18n/index.js';
@@ -24,7 +25,7 @@ import { WorkerPool } from '../shared/workerPool.js';
 import { GRASS_SURFACE } from '../magpie.js';
 import { OBSTACLES, KITE_SPRITE, BIRDS, BIRD_NAMES, CLS, gridSvg } from './sprites.js';
 import { createWorld, resize, step, kiteBob, reactTimeAt, STEP } from './rules.js';
-import { SPEED, CRASH, DUST, VIEW, WIND } from './config.js';
+import { SPEED, CRASH, DUST, VIEW, WIND, DAYNIGHT } from './config.js';
 
 const BIRD_KEY = 'kachirun-bird';
 const BEST_KEY = (name) => `kachirun-best-${name}`;
@@ -165,15 +166,32 @@ function createGame() {
     if (world) resize(world, cells, visible);
   }
 
-  /* ---------- 1200점: 게임 화면 안에서만 낮 ↔ 밤 (저장값은 그대로) ---------- */
+  /* ---------- DAYNIGHT.at 점수: 게임 화면 안에서만 낮 ↔ 밤 (저장값은 그대로) ---------- */
+  let fadeTimer = 0;
+  /** 모드 바꾸기. smooth 면 DAYNIGHT.fade 초 동안 색이 단계적으로 바뀐다 (모션 줄이기면 CSS 가 바로 바꾼다) */
+  function setMode(mode, smooth) {
+    clearTimeout(fadeTimer);
+    if (smooth) {
+      root.style.setProperty('--mode-fade', `${DAYNIGHT.fade}s`);
+      root.style.setProperty('--mode-steps', String(DAYNIGHT.fadeSteps));
+      root.setAttribute('data-mode-fade', '');
+      fadeTimer = setTimeout(endFade, DAYNIGHT.fade * 1000 + 100);
+    } else endFade();
+    root.dataset.mode = mode;
+  }
+  function endFade() {
+    root.removeAttribute('data-mode-fade');
+    root.style.removeProperty('--mode-fade');
+    root.style.removeProperty('--mode-steps');
+  }
   function flipMode() {
     if (savedMode !== null) return;
     savedMode = root.dataset.mode || 'day';
-    root.dataset.mode = savedMode === 'night' ? 'day' : 'night';
+    setMode(savedMode === 'night' ? 'day' : 'night', true);
   }
-  function restoreMode() {
-    if (savedMode === null) return;
-    root.dataset.mode = savedMode;
+  function restoreMode(smooth = false) {
+    if (savedMode === null) { if (!smooth) { clearTimeout(fadeTimer); endFade(); } return; }
+    setMode(savedMode, smooth);
     savedMode = null;
   }
 
@@ -425,7 +443,7 @@ function createGame() {
       if (world.score > best[n]) { best[n] = world.score; isNewBest = true; store(BEST_KEY(n), best[n]); }
     } else if (e === 'over') {
       state = 'over';
-      restoreMode();                     // 판이 끝나면 원래 테마로
+      restoreMode(true);                 // 판이 끝나면 원래 테마로 (천천히)
       showPanel('over');
       setTimeout(() => { overReady = true; }, CRASH.readyDelay * 1000);   // 부딪힐 때 누르고 있던 손으로 바로 다시 시작하지 않게
     }

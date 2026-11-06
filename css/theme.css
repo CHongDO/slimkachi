@@ -291,3 +291,161 @@
   --ornament-opacity: .30;
   --ornament-frame: #4b405f;
 }
+
+/* ============================================================
+   낮 ↔ 밤 천천히 바꾸기 — <html data-mode-fade> 동안만 (지금은 까치런 안 전환에서 kachiRun.js 가 붙인다)
+   ------------------------------------------------------------
+   · 낮/밤에 값이 다른 색 변수를 '색'으로 등록해 두면 변수 자체가 보간된다 → 하늘·산·나무·땅·장애물·카드가 같이 천천히.
+   · 길이 --mode-fade · 단계 수 --mode-steps 는 JS 가 config(DAYNIGHT.fade·fadeSteps)로 넣는다. steps() 로 한 칸씩(픽셀 느낌).
+   · 낮/밤에 다른 색 변수를 새로 만들면 여기 @property 와 transition 목록에도 넣을 것(빠지면 그 색만 한 번에 바뀜).
+   · 모션 줄이기면 shell.css 가 transition 을 꺼서 한 번에 바뀐다.
+   ============================================================ */
+@property --sky-top { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --sky-bottom { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --scene-far { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --scene-near { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --scene-grass { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --scene-grass-dark { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --scene-soil { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --scene-soil-dot { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --scene-fx { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --scene-fx-2 { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --scene-prop-a { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --scene-prop-b { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --scene-prop-c { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --app-bg { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --surface-1 { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --surface-2 { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --surface-3 { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --header-bg { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --footer-bg { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --frame { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --border { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --border-strong { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --shadow { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --backdrop { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kachi-outline { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --text { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --text-secondary { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --text-muted { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --text-link { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --accent { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --accent-text { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --text-accent { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --accent-soft { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --accent-2 { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --spark { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --control-bg { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --control-bg-hover { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --control-border { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --bg-success { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --border-success { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --text-success { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --bg-warning { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --border-warning { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --text-warning { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --bg-danger { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --border-danger { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --text-danger { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --overlay-bg { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --overlay-text { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --divider { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kr-onggi-edge { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kr-onggi { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kr-onggi-light { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kr-onggi-shade { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kr-stone-edge { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kr-stone { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kr-stone-light { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kr-straw { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kr-straw-dark { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kr-rope { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kr-kite-frame { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kr-kite-paper { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kr-kite-red { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kr-kite-blue { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kr-kite-yellow { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kr-kite-string { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kr-pebble { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kr-dust { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kr-wind { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kr-rim { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --ornament-ink { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --ornament-frame { syntax: '<color>'; inherits: true; initial-value: transparent; }
+:root[data-mode-fade] {
+  transition-property:
+    --sky-top,
+    --sky-bottom,
+    --scene-far,
+    --scene-near,
+    --scene-grass,
+    --scene-grass-dark,
+    --scene-soil,
+    --scene-soil-dot,
+    --scene-fx,
+    --scene-fx-2,
+    --scene-prop-a,
+    --scene-prop-b,
+    --scene-prop-c,
+    --app-bg,
+    --surface-1,
+    --surface-2,
+    --surface-3,
+    --header-bg,
+    --footer-bg,
+    --frame,
+    --border,
+    --border-strong,
+    --shadow,
+    --backdrop,
+    --kachi-outline,
+    --text,
+    --text-secondary,
+    --text-muted,
+    --text-link,
+    --accent,
+    --accent-text,
+    --text-accent,
+    --accent-soft,
+    --accent-2,
+    --spark,
+    --control-bg,
+    --control-bg-hover,
+    --control-border,
+    --bg-success,
+    --border-success,
+    --text-success,
+    --bg-warning,
+    --border-warning,
+    --text-warning,
+    --bg-danger,
+    --border-danger,
+    --text-danger,
+    --overlay-bg,
+    --overlay-text,
+    --divider,
+    --kr-onggi-edge,
+    --kr-onggi,
+    --kr-onggi-light,
+    --kr-onggi-shade,
+    --kr-stone-edge,
+    --kr-stone,
+    --kr-stone-light,
+    --kr-straw,
+    --kr-straw-dark,
+    --kr-rope,
+    --kr-kite-frame,
+    --kr-kite-paper,
+    --kr-kite-red,
+    --kr-kite-blue,
+    --kr-kite-yellow,
+    --kr-kite-string,
+    --kr-pebble,
+    --kr-dust,
+    --kr-wind,
+    --kr-rim,
+    --ornament-ink,
+    --ornament-frame;
+  transition-duration: var(--mode-fade, 3s);
+  transition-timing-function: steps(var(--mode-steps, 12), end);
+}

@@ -209,7 +209,8 @@ export function step(w, input, dt = STEP) {
   }
 
   w.t += dt;
-  w.speed = Math.min(w.maxSpeed, SPEED.start + SPEED.acc * w.t);   // 좁은 화면은 반응 시간을 지키는 속도까지만
+  const acc = w.score >= SPEED.late.from ? SPEED.late.acc : SPEED.acc;   // 후반엔 더 빨리 가속
+  w.speed = Math.min(w.maxSpeed, w.speed + acc * dt);                    // 좁은 화면은 반응 시간을 지키는 속도까지만
   const move = w.speed * dt;
   w.dist += move;
   w.score = Math.floor(w.dist * SCORE.perCell);
