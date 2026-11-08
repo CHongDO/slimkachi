@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="landscape" data-intent="pdf-compress">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 기능별 입구 페이지: 작업실은 메인과 같고, data-intent 로 안내 띠·처음 동작만 다르다 (js/apps/workspace.js INTENTS) -->
+  <!-- 낮/밤: 그리기 전에 정한다 (저장한 값 → 없으면 운영체제 설정). 토글은 js/theme.js -->
+  <script>(function(){var m;try{m=localStorage.getItem("ft-mode")}catch(e){}if(m!=="day"&&m!=="night")m=matchMedia("(prefers-color-scheme: dark)").matches?"night":"day";var d=document.documentElement;d.setAttribute("data-mode",m);d.setAttribute("data-moon",Math.random()<.5?"full":"crescent")})();</script>
+
+  <!-- ====== SEO 기본 ====== -->
+  <title>PDF 용량 줄이기 - 글자 선택 그대로 PDF 압축 | 서버 전송 없이 무료 | 슬림까치</title>
+  <meta name="description" content="스캔본·사진이 많은 PDF의 용량을 줄입니다. 글자·도형은 건드리지 않아 압축 후에도 글자 선택·검색이 되고, 파일은 서버로 보내지 않고 내 기기에서 처리합니다.">
+  <meta name="keywords" content="PDF 용량 줄이기, PDF 압축, PDF 파일 크기 줄이기, 스캔 PDF 용량 줄이기, PDF 용량 줄이는 법, PDF 압축 무료, 슬림까치, SlimKachi">
+  <link rel="canonical" href="https://slimkachi.pages.dev/pdf-compress/">
+  <meta name="robots" content="index, follow">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="alternate icon" href="../assets/favicon.ico">
+
+  <!-- ====== Open Graph ====== -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="슬림까치 SlimKachi">
+  <meta property="og:locale" content="ko_KR">
+  <meta property="og:title" content="PDF 용량 줄이기 - 글자 선택 그대로 PDF 압축 | 슬림까치">
+  <meta property="og:description" content="스캔본·사진이 많은 PDF의 용량을 줄입니다. 글자·도형은 건드리지 않아 압축 후에도 글자 선택·검색이 되고, 파일은 서버로 보내지 않고 내 기기에서 처리합니다.">
+  <meta property="og:url" content="https://slimkachi.pages.dev/pdf-compress/">
+  <meta property="og:image" content="https://slimkachi.pages.dev/assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="SlimKachi 로고 — 사진·PDF·문서 용량 줄이기 · 업로드 없이 무료">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PDF 용량 줄이기 - 글자 선택 그대로 PDF 압축 | 슬림까치">
+  <meta name="twitter:description" content="스캔본·사진이 많은 PDF의 용량을 줄입니다. 글자·도형은 건드리지 않아 압축 후에도 글자 선택·검색이 되고, 파일은 서버로 보내지 않고 내 기기에서 처리합니다.">
+  <meta name="twitter:image" content="https://slimkachi.pages.dev/assets/og-image.png">
+
+  <!-- ====== 구조화 데이터 (프로그램 + 자주 묻는 질문 — 아래 본문의 FAQ 와 같은 글) ====== -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "슬림까치 PDF 용량 줄이기",
+        "alternateName": "SlimKachi",
+        "url": "https://slimkachi.pages.dev/pdf-compress/",
+        "inLanguage": "ko",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Web Browser",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "KRW"
+        },
+        "description": "파일을 서버로 보내지 않고 브라우저 안에서 PDF 속 사진만 알맞게 다시 압축해 용량을 줄이는 무료 도구. 글자 선택·검색은 그대로."
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "얼마나 줄어드나요?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "스캔본이나 사진이 많은 PDF는 몇 분의 1로 줄기도 하지만, 글자 위주 PDF는 원래 작아서 감소 폭이 작습니다. 3%도 줄지 않으면 원본을 그대로 둡니다."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "압축하면 글자가 깨지나요?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "아니요. 글자와 도형은 바꾸지 않고 사진만 다시 압축합니다. 확대했을 때 사진 화질이 신경 쓰이면 화질 우선으로 다시 적용해 보세요."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "큰 PDF도 줄일 수 있나요?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "한 개에 80MB(메모리가 8GB 이상인 PC는 150MB)까지 올릴 수 있습니다. 더 큰 PDF는 먼저 PDF 나누기로 나눈 뒤 줄여 보세요."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "암호가 걸린 PDF도 되나요?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "암호(보안)가 설정된 PDF는 손대지 않고 안내만 합니다. 암호를 해제한 뒤 다시 올려 주세요."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/scene.css">
+  <link rel="stylesheet" href="../css/shell.css">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1007112926199900"
+    crossorigin="anonymous"></script>
+</head>
+<body>
+  <!-- ====== 배경 장면 (장식 — 스크린리더 제외). 레이어 구조는 css/scene.css ====== -->
+  <div class="scene" aria-hidden="true">
+    <div class="scene__sky"></div>
+    <div class="scene__night">
+      <div class="scene__stars"><i></i><i></i><i></i><i></i></div>
+      <div class="scene__meteor"></div>
+      <div class="scene__moon"><canvas width="56" height="56"></canvas></div>
+    </div>
+    <div class="scene__day">
+      <div class="scene__clouds"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div>
+    </div>
+    <div class="scene__far" data-depth="0.04"></div>
+    <div class="scene__props scene__props--far" data-depth="0.05"><b><i></i></b><b><i></i></b></div>
+    <div class="scene__haze" data-depth="0.05"></div>
+    <div class="scene__near" data-depth="0.08"></div>
+    <div class="scene__props scene__props--near" data-depth="0.02"><b><i></i></b><b><i></i></b></div>
+    <div class="scene__ground"></div>
+    <div class="scene__fx"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+
+  <div class="app-shell">
+
+    <!-- ====== 헤더: 브랜드 + 문서 링크 ====== -->
+    <header class="app-header">
+      <a class="app-header__brand brand" href="../" aria-label="SlimKachi 처음 화면">
+        <svg class="brand__icon" width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><rect x="7" y="0" width="3" height="3" class="kk"/><rect x="4" y="3" width="2" height="1" class="kk" fill-opacity=".45"/><rect x="6" y="3" width="5" height="1" class="kk"/><rect x="11" y="3" width="3" height="1" class="kk" fill-opacity=".45"/><rect x="7" y="4" width="4" height="4" class="kk"/><rect x="9" y="5" width="1" height="1" class="kw"/><rect x="6" y="4" width="1" height="1" class="ky"/><rect x="6" y="6" width="1" height="1" class="ky"/><rect x="7" y="8" width="1" height="1" class="kr"/><rect x="11" y="6" width="2" height="1" class="kg"/><rect x="13" y="6" width="3" height="2" class="ks"/><rect x="13" y="6" width="1" height="2" class="ke"/><rect x="14" y="6" width="1" height="2" class="kr"/><rect x="4" y="8" width="3" height="4" class="kk"/><rect x="8" y="8" width="2" height="4" class="kk"/><rect x="8" y="9" width="3" height="3" class="kw"/><rect x="5" y="9" width="2" height="1" class="kw"/><rect x="1" y="11" width="3" height="1" class="kk"/><rect x="0" y="12" width="2" height="2" class="kk"/><rect x="7" y="12" width="1" height="2" class="kg"/><rect x="9" y="12" width="1" height="2" class="kg"/></svg>
+        <span class="brand__badge" aria-hidden="true">SLIM</span><span class="brand__name" aria-hidden="true">Kachi</span>
+      </a>
+      <span class="app-header__spacer"></span>
+      <nav class="app-header__lang" aria-label="언어 / Language">
+        <a href="../" hreflang="ko" lang="ko">한국어</a>
+        <a href="../en/" hreflang="en" lang="en">English</a>
+        <a href="../ja/" hreflang="ja" lang="ja">日本語</a>
+      </nav>
+      <div class="app-header__links">
+        <a href="../pages/about.html">소개</a>
+        <a href="../pages/features.html">기능</a>
+        <a href="../pages/privacy.html">개인정보</a>
+      </div>
+      <button type="button" class="btn app-header__game" data-game-open title="까치런 — 크롬 공룡 게임 오마주 미니게임" aria-label="까치런 — 크롬 공룡 게임 오마주 미니게임"><svg class="ico" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M3 3h10v1h-10zM2 4h12v1h-12zM1 5h14v1h-14zM1 6h3v1h-3zM5 6h7v1h-7zM13 6h2v1h-2zM1 7h2v1h-2zM6 7h4v1h-4zM11 7h4v1h-4zM1 8h3v1h-3zM5 8h10v1h-10zM1 9h14v1h-14zM1 10h5v1h-5zM10 10h5v1h-5zM1 11h4v1h-4zM11 11h4v1h-4zM2 12h2v1h-2zM12 12h2v1h-2z"/></svg><span>까치런</span></button>
+      <button type="button" class="btn btn--icon" data-theme-toggle aria-pressed="false" title="밤 모드로 바꾸기"><svg class="ico" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M6 1h1v1h-1zM4 2h2v1h-2zM3 3h3v1h-3zM2 4h4v1h-4zM1 5h5v1h-5zM1 6h5v1h-5zM1 7h5v1h-5zM1 8h6v1h-6zM1 9h7v1h-7zM1 10h13v1h-13zM2 11h11v1h-11zM3 12h9v1h-9zM4 13h7v1h-7zM6 14h3v1h-3z"/></svg><span class="sr-only">밤 모드로 바꾸기</span></button>
+    </header>
+
+    <!-- ====== 본문: 앱이 마운트되는 영역 ====== -->
+    <main class="app-main">
+      <!-- 검색엔진/스크린리더용 페이지 제목 -->
+      <h1 class="sr-only">PDF 용량 줄이기 — 글자 선택 그대로 PDF 압축 (슬림까치, 서버 전송 없이 무료)</h1>
+      <div id="app-root"></div>
+      <noscript>
+        <div class="card"><p>이 도구는 브라우저 안에서 파일을 처리하기 위해 JavaScript가 필요합니다. JavaScript를 켠 뒤 다시 열어 주세요.</p></div>
+      </noscript>
+
+      <!-- ====== 소개 (이 기능만 다루는 글 — HTML로 직접 작성, 메인 소개글과 겹치지 않게) ====== -->
+      <article class="intro" aria-label="PDF 용량 줄이기 소개">
+        <section class="intro__sec">
+          <h2>PDF 용량 줄이기 — 글자는 그대로, 사진만 알맞게</h2>
+          <p>PDF가 큰 이유는 대부분 안에 든 사진과 스캔 이미지입니다. 화면이나 일반 인쇄에 필요한 것보다 훨씬 높은 해상도로 들어간 경우가 많아, 이 이미지를 알맞은 해상도로 줄이고 다시 압축하면 크게 작아집니다. 용량 우선은 150ppi, 균형은 200ppi, 화질 우선은 300ppi까지 사진을 유지하고, 원본과 비교해 눈에 띄는 차이가 없는 선까지만 압축합니다.</p>
+          <p>글자·폰트·도형은 건드리지 않고 페이지를 그림으로 바꾸지도 않아, 압축한 PDF에서도 글자 선택과 검색이 그대로 됩니다. 그 밖에는 똑같이 중복된 데이터를 합치는 것 같은 무손실 정리만 합니다. 거의 줄지 않는 PDF는 원본을 그대로 둡니다.</p>
+        </section>
+
+        <section class="intro__sec">
+          <h2>사용 순서</h2>
+          <ol>
+            <li>PDF를 올립니다. 여러 개를 한꺼번에 올려도 됩니다.</li>
+            <li>왼쪽 <strong>[압축]</strong> 탭에서 용량 우선·균형·화질 우선 중 하나를 고릅니다.</li>
+            <li><strong>[적용]</strong>을 누르고, 오른쪽에서 첫 쪽 전후 그림과 줄어든 용량을 확인합니다.</li>
+            <li>파일을 받거나 [전체 내보내기]로 ZIP 하나에 받습니다. 이름은 <code>원래이름_min.pdf</code>입니다.</li>
+          </ol>
+          <p>다른 작업도 같은 작업실에서 이어서 할 수 있습니다:
+            <a href="../pdf-split/">PDF 나누기</a> · <a href="../pdf-merge/">PDF 합치기</a> · <a href="../hwp-compress/">한글 용량 줄이기</a> · <a href="../">사진·문서까지 한곳에서 (작업실 처음 화면)</a></p>
+        </section>
+
+        <section class="intro__sec intro__faq">
+          <h2>자주 묻는 질문</h2>
+          <h3>얼마나 줄어드나요?</h3>
+          <p>스캔본이나 사진이 많은 PDF는 몇 분의 1로 줄기도 하지만, 글자 위주 PDF는 원래 작아서 감소 폭이 작습니다. 3%도 줄지 않으면 원본을 그대로 둡니다.</p>
+          <h3>압축하면 글자가 깨지나요?</h3>
+          <p>아니요. 글자와 도형은 바꾸지 않고 사진만 다시 압축합니다. 확대했을 때 사진 화질이 신경 쓰이면 화질 우선으로 다시 적용해 보세요.</p>
+          <h3>큰 PDF도 줄일 수 있나요?</h3>
+          <p>한 개에 80MB(메모리가 8GB 이상인 PC는 150MB)까지 올릴 수 있습니다. 더 큰 PDF는 먼저 PDF 나누기로 나눈 뒤 줄여 보세요.</p>
+          <h3>암호가 걸린 PDF도 되나요?</h3>
+          <p>암호(보안)가 설정된 PDF는 손대지 않고 안내만 합니다. 암호를 해제한 뒤 다시 올려 주세요.</p>
+        </section>
+      </article>
+    </main>
+
+    <!-- ====== 푸터 ====== -->
+    <footer class="app-footer">
+      <p class="app-footer__notice">
+        <svg class="ico" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M7 1h2v1h-2zM5 2h2v1h-2zM9 2h2v1h-2zM3 3h2v1h-2zM11 3h2v1h-2zM2 4h1v1h-1zM13 4h1v1h-1zM2 5h1v1h-1zM10 5h2v1h-2zM13 5h1v1h-1zM2 6h1v1h-1zM9 6h2v1h-2zM13 6h1v1h-1zM2 7h1v1h-1zM4 7h2v1h-2zM8 7h2v1h-2zM13 7h1v1h-1zM3 8h1v1h-1zM5 8h4v1h-4zM12 8h1v1h-1zM3 9h1v1h-1zM6 9h2v1h-2zM12 9h1v1h-1zM4 10h1v1h-1zM11 10h1v1h-1zM5 11h1v1h-1zM10 11h1v1h-1zM6 12h1v1h-1zM9 12h1v1h-1zM7 13h2v1h-2z"/></svg>
+        파일은 브라우저 안에서만 처리되며 서버로 전송되지 않습니다.
+      </p>
+      <nav class="app-footer__tools" aria-label="기능별 바로가기">
+        <a href="../pdf-split/">PDF 나누기</a>
+        <a href="../pdf-merge/">PDF 합치기</a>
+        <a href="../pdf-compress/" aria-current="page">PDF 용량 줄이기</a>
+        <a href="../hwp-compress/">한글 용량 줄이기</a>
+      </nav>
+      <span>© <span id="year"></span> SlimKachi</span>
+      <span class="app-footer__spacer"></span>
+      <a href="../pages/about.html">사이트 소개</a>
+      <a href="../pages/features.html">기능 소개</a>
+      <a href="../pages/privacy.html">개인정보처리방침</a>
+    </footer>
+  </div>
+
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+  <script type="module" src="../js/main.js"></script>
+</body>
+</html>

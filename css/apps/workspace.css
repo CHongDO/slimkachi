@@ -70,6 +70,25 @@
 }
 .ws-steps li:not(:last-child)::after { content: "▶"; color: var(--text-muted); font-size: var(--font-size-xs); margin-left: var(--space-1); }
 
+/* ---- 입구 페이지 안내 띠: 이 기능의 순서 3단계 (제목 줄 아래, 닫기 가능 — 화면을 가리지 않음) ---- */
+.ws-guide {
+  --bw: var(--px); --bc: var(--text-accent); --drop: var(--shadow-pixel);
+  background: var(--accent-soft);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  display: flex; align-items: center; gap: var(--space-3);
+  box-shadow:
+    0 calc(-1 * var(--bw)) 0 0 var(--bc), 0 var(--bw) 0 0 var(--bc),
+    calc(-1 * var(--bw)) 0 0 0 var(--bc), var(--bw) 0 0 0 var(--bc),
+    var(--drop);
+}
+.ws-guide__steps { flex: 1 1 auto; color: var(--text); }
+.ws-guide__close { flex: 0 0 auto; margin-bottom: 0; }
+@media (max-width: 720px) {
+  .ws-guide { padding-left: var(--space-3); align-items: flex-start; }
+  .ws-guide__steps { flex-direction: column; align-items: flex-start; }
+  .ws-guide__steps li:not(:last-child)::after { display: none; }   /* 세로로 쌓을 땐 ▶ 없이 */
+}
+
 /* ---- 업로드: 픽셀 점선이 한 칸씩 흐른다 ---- */
 .ws-drop {
   --dash: var(--border-strong);

@@ -203,6 +203,8 @@ strong, b { font-weight: 400; color: var(--text); }   /* Galmuri14 에는 굵은
   color: var(--text-secondary);
 }
 .app-footer__notice svg { color: var(--text-success); flex: 0 0 auto; }
+/* 기능별 바로가기 (PDF 나누기 · PDF 합치기 · PDF 용량 줄이기 · 한글 용량 줄이기) — 한 줄 통째로 */
+.app-footer__tools { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); }
 
 /* ---- 광고 자리: 장식 없이 (장면·그림자·테두리 없음, 평범한 바탕) ---- */
 ins.adsbygoogle, .google-auto-placed {

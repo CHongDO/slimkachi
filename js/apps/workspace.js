@@ -156,6 +156,24 @@ const ORIENT_OPTS = [
 ];
 /** 합친 PDF 가 이보다 크면 [이어서 압축하기] 옆에 '제출용이라면 압축을 추천해요' */
 const NEXT_HINT_BYTES = 10 * 1000 * 1000;
+
+/* 기능별 입구 페이지: 각 HTML 의 <html data-intent="…"> (메인은 없음).
+   작업실은 같고, 제목 줄 아래 안내 띠(사용 순서 3단계)와 처음 동작만 다르다 — 순서 문구는 사전 키.
+   영어·일본어 입구를 만들 때는 같은 data-intent 를 붙이면 그 언어 사전으로 나온다. */
+const INTENTS = {
+  'pdf-split': ['ws.303', 'ws.304', 'ws.305'],
+  'pdf-merge': ['ws.306', 'ws.307', 'ws.308'],
+  'pdf-compress': ['ws.309', 'ws.310', 'ws.311'],
+  'hwp-compress': ['ws.312', 'ws.313', 'ws.314'],
+};
+const guideKey = (intent) => `slimkachi-guide-closed:${intent}`;
+/** 닫은 안내 띠 기억 (저장소를 못 쓰는 브라우저면 매번 보인다) */
+function guideClosed(intent) {
+  try { return localStorage.getItem(guideKey(intent)) === '1'; } catch { return false; }
+}
+function rememberGuideClosed(intent) {
+  try { localStorage.setItem(guideKey(intent), '1'); } catch { /* 저장 못 해도 지금은 닫힌다 */ }
+}
 const PDF_TABS = [
   { id: 'compress', label: tx('ws.190') },
   { id: 'split', label: tx('ws.191') },
@@ -237,8 +255,21 @@ export default {
 
   mount(container) {
     loadCss('css/apps/workspace.css');
-    container.innerHTML = template(currentLimits());
+    // 들어온 입구 페이지의 의도 (<html> 또는 #app-root 의 data-intent). 메인은 '' — 지금과 똑같이 동작
+    const asked = document.documentElement.dataset.intent || container.dataset.intent || '';
+    const intent = INTENTS[asked] ? asked : '';
+    container.innerHTML = template(currentLimits(), intent);
     const $ = (sel) => container.querySelector(sel);
+
+    // 안내 띠 닫기 (화면을 가리지 않는 띠 — 닫으면 그 입구에서는 다시 안 보임)
+    const guide = $('.ws-guide');
+    if (guide) {
+      guide.querySelector('[data-act="guide-close"]').addEventListener('click', () => {
+        guide.hidden = true;
+        rememberGuideClosed(intent);
+        $('.ws-drop').focus();   // 닫은 버튼과 함께 포커스가 사라지지 않게
+      });
+    }
 
     const state = { items: [], nextId: 1, selectedId: null };
     // 작업 번호 → { item, track }. track: 'main' = 압축 등 항목 자체 처리 · 'split' = 나누기 · 'merge' = 합치기(item 없음)
@@ -378,7 +409,17 @@ export default {
         else loadPdfThumb(item);
         renderRow(item);
       }
-      if (added.length && !selected()) select(added[0].id);
+      // 기능별 입구 페이지(data-intent)에서는 그 기능으로 바로 이어지게
+      const firstPdf = added.find((it) => it.kind === 'pdf');
+      if (intent === 'pdf-split' && firstPdf) {
+        // PDF 나누기: 올린 첫 PDF 를 고르고 [나누기] 탭을 연다 (쪽 수는 미리보기가 끝나면 채워진다)
+        firstPdf.settings.tab = 'split';
+        select(firstPdf.id);
+      } else if (added.length && !selected()) select(added[0].id);
+      if (intent === 'pdf-merge') {
+        // PDF 합치기: 올린 PDF·사진은 체크해 둔다 (문서는 합칠 수 없어 체크하지 않음). 2개 이상이면 [합치기]가 강조된다
+        added.filter((it) => it.kind === 'pdf' || it.kind === 'image').forEach((it) => picked.add(it.id));
+      }
       // 지금 필터에서 안 보이는 종류를 올렸으면 전체 보기로 (올린 파일이 사라진 것처럼 보이지 않게)
       if (added.some((it) => !inFilter(it.kind, filter))) setFilter('all');
       renderAll();
@@ -1582,6 +1623,8 @@ export default {
       const btn = pickbar.querySelector('[data-act="merge"]');
       btn.querySelector('span').textContent = n >= 2 ? tx('ws.227', { n }) : tx('ws.226');
       btn.disabled = n < 2 || mergeBusy();
+      // PDF 합치기 입구: 고를 준비가 되면 [합치기]를 주 버튼 색으로 강조
+      btn.classList.toggle('btn--primary', intent === 'pdf-merge' && !btn.disabled);
       pickbar.querySelector('[data-act="unpick"]').hidden = picked.size === 0;
       pickbar.querySelector('.ws-pickbar__hint').hidden = n >= 2 || out.length > 0;
       const lines = [];
@@ -2278,7 +2321,7 @@ function targetLabel(bytes) {
 }
 
 /* ============================================================ */
-function template(lim) {
+function template(lim, intent = '') {
   return `
   <section class="ws">
     <header class="ws-head">
@@ -2287,6 +2330,12 @@ function template(lim) {
         <li>${tx('ws.137')}</li><li>${tx('ws.138')}</li><li>${tx('ws.139')}</li><li>${tx('ws.140')}</li><li>${tx('ws.141')}</li>
       </ol>
     </header>
+    ${intent ? `
+    <!-- 입구 페이지 안내 띠 (팝업 아님 — 닫으면 기억) -->
+    <div class="ws-guide" role="note" aria-label="${tx('ws.301')}" ${guideClosed(intent) ? 'hidden' : ''}>
+      <ol class="ws-steps ws-guide__steps">${INTENTS[intent].map((k) => `<li>${tx(k)}</li>`).join('')}</ol>
+      <button type="button" class="btn btn--icon ws-guide__close" data-act="guide-close" title="${tx('ws.302')}">${icon('close', 16)}<span class="sr-only">${tx('ws.302')}</span></button>
+    </div>` : ''}
 
     <div class="ws-hero">
       <h2 class="ws-hero__title">${tx('ws.187')}</h2>

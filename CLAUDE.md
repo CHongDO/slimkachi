@@ -50,6 +50,9 @@
 ```
 index.html                    진입점 (셸 뼈대 + SEO 메타 + 하단 '서버 전송 없음' 안내) — 한국어
 en/index.html  ja/index.html  영어·일본어 진입점 (같은 css·js 를 ../ 로, 소개글은 그 언어로 새로 쓴 HTML)
+pdf-split/ pdf-merge/ pdf-compress/ hwp-compress/   기능별 입구 페이지 (각 index.html, 한국어). 메인과 같은 head·header·footer·작업실,
+                              <html data-intent="…"> 로 안내 띠·처음 동작만 다름. 제목·설명·og·canonical(끝 슬래시)·JSON-LD
+                              (SoftwareApplication + FAQPage — 본문 FAQ 와 같은 글)·소개글(그 기능만, 메인 글 복사 금지)은 페이지마다 HTML 로 직접
 ads.txt                       AdSense 판매자 정보
 css/theme.css                 테마 변수: 공통 토큰 + 테마 팩(landscape 낮/밤) + 갈무리 폰트 (← 색/간격 변경은 여기만)
 css/scene.css                 배경 장면 레이어 구조 (하늘·구름·까치·별·별똥별·달·먼 산·먼 나무·안개·가까운 산·가까운 나무·땅·꽃잎/반딧불)
@@ -121,6 +124,16 @@ css/game.css                  까치런 스타일 (처음 열 때 불러옴). �
 pages/                        about / features / privacy (애드센스 심사용)
 robots.txt sitemap.xml        SEO
 ```
+
+## 기능별 입구 페이지 (data-intent)
+- /pdf-split/ · /pdf-merge/ · /pdf-compress/ · /hwp-compress/ — 작업실은 하나(js 그대로), 들어온 주소의 `<html data-intent>`
+  (또는 #app-root 의 data-intent)만 다르다. 메인(/)은 data-intent 없음 = 예전과 똑같이.
+- workspace.js INTENTS: 의도 → 안내 띠 3단계 문구 키(ws.303~314). 띠는 작업실 제목 줄 아래 .ws-guide(팝업 아님), 닫으면
+  localStorage 'slimkachi-guide-closed:<intent>' (try/catch). pdf-split = 올린 첫 PDF 를 골라 [나누기] 탭,
+  pdf-merge = 올린 PDF·사진을 체크(문서 제외), 2개 이상이면 [N개 합치기]를 주 버튼 색으로.
+- 영어·일본어 입구는 아직 없음. 만들 때는 en/pdf-split/ 처럼 같은 구조 + 같은 data-intent (안내 문구는 en·ja 사전에 이미 있음),
+  hreflang 으로 서로 잇고 sitemap 에 추가.
+- 링크: 메인 소개글 '기능별로 바로 가기'와 푸터 .app-footer__tools(메인·입구 페이지), /guide/hwp ↔ /hwp-compress/ (가이드 = 방법 설명, 입구 = 바로 하기).
 
 ## 다국어 (ko / en / ja)
 - 언어는 각 페이지의 `<html lang>`. `js/i18n/index.js` 가 최상위 await 로 그 사전을 불러 두고, 코드에서는 `tx('키', { 이름: 값 })`.
@@ -378,7 +391,8 @@ python -m http.server 5500     # → http://localhost:5500
 
 ## 배포 전 체크리스트
 - [ ] `slimkachi.pages.dev` → 실제 배포 주소로 전부 치환
-      (index.html의 canonical·og:url·og:image·JSON-LD url, pages/*.html canonical, sitemap.xml, robots.txt)
+      (index.html의 canonical·og:url·og:image·JSON-LD url, pages/*.html canonical, sitemap.xml, robots.txt,
+       입구 페이지 4개 pdf-split/ pdf-merge/ pdf-compress/ hwp-compress/ 의 canonical·og:url·og:image·twitter:image·JSON-LD url)
 - [ ] `ads.txt`가 루트에서 열리는지 확인 (`https://<주소>/ads.txt`)
 - [ ] AdSense 스크립트 client id(`ca-pub-1007112926199900`)가 ads.txt의 pub id와 일치
 - [x] `assets/og-image.png`(1200×630, 낮 배경 + 로고 + 문구)·`favicon.svg`·`favicon.ico`(16·32·48·64) SlimKachi 로 교체 완료
