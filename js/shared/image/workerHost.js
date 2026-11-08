@@ -26,12 +26,16 @@ export function serve(processFile) {
     try {
       const result = await processFile(file, options || {}, ctx);
       ctx.progress(tx('ws.057'), 1);
-      const transfer = result.bytes ? [result.bytes.buffer] : [];
-      self.postMessage({ type: 'done', id, result }, transfer);
+      // 결과 파일이 여러 개(PDF 나누기 parts)여도 모두 복사 없이 넘긴다 (같은 버퍼는 한 번만)
+      const buffers = new Set();
+      if (result.bytes) buffers.add(result.bytes.buffer);
+      for (const p of result.parts || []) if (p.bytes) buffers.add(p.bytes.buffer);
+      self.postMessage({ type: 'done', id, result }, [...buffers]);
     } catch (err) {
       const notice = !!(err && err.notice); // 처리할 수 없는 파일 안내(암호 PDF 등) — 오류 아님
       // code: 'unsupported' = 브라우저·전용 디코더 모두 못 여는 형식 · 'network' = 디코더를 못 받음
-      const code = err && err.unsupported ? 'unsupported' : err && err.network ? 'network' : '';
+      //       'encrypted' = 암호(보안) PDF (화면이 기억해 두고 합치기 전에 미리 알린다)
+      const code = err && err.unsupported ? 'unsupported' : err && err.network ? 'network' : err && err.encrypted ? 'encrypted' : '';
       if (!notice && !code) console.error(err);
       self.postMessage({ type: 'error', id, notice, code, message: (err && err.message) || String(err) });
     }

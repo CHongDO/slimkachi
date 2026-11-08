@@ -15,7 +15,8 @@
    ============================================================ */
 
 import { TARGETS } from '../../shared/image/pipeline.js';
-import { loadPdfLib, runQpdf } from './libs.js';
+import { runQpdf } from './libs.js';
+import { openPdf } from './open.js';
 import { measureImageUse } from './content.js';
 import { optimiseImages } from './images.js';
 import { t as tx } from '../../i18n/index.js';
@@ -26,32 +27,14 @@ const QPDF_ARGS = [
   '--decode-level=generalized', '--remove-unreferenced-resources=yes',
 ];
 // 문구는 처리 때마다 그 언어로 만든다 (워커는 시작한 뒤에 언어를 받음)
-const ENCRYPTED = () => tx('pdf.001');
 const KEPT = () => tx('pdf.002');
-/** 오류가 아니라 '처리할 수 없는 파일' 안내 (화면에서 경고색으로 표시) */
-const notice = (message) => Object.assign(new Error(message), { notice: true });
 
 export async function compressPdf(file, o, ctx) {
   const mode = TARGETS[o.mode] ? o.mode : 'size';
   ctx.progress(tx('pdf.003'), 0.02);
   const src = new Uint8Array(await file.arrayBuffer());
-  if (!isPdf(src)) throw new Error(tx('pdf.004'));
-
-  ctx.progress(tx('pdf.005'), 0.04);
-  const L = await loadPdfLib();
-  const load = (bytes) => L.PDFDocument.load(bytes, { ignoreEncryption: true, updateMetadata: false, throwOnInvalidObject: false });
-
-  let doc = null;
-  try { doc = await load(src); } catch (e) { console.warn('pdf-lib load', e); }
-  if (doc && doc.isEncrypted) throw notice(ENCRYPTED());
-  if (!doc) {
-    // 구조가 깨진 파일: qpdf 로 먼저 복구해 본다
-    if (hasEncryptKey(src)) throw notice(ENCRYPTED());
-    ctx.progress(tx('pdf.006'), 0.06);
-    try { doc = await load(await runQpdf(src, ['--object-streams=disable'])); }
-    catch { throw new Error(tx('pdf.007')); }
-    if (doc.isEncrypted) throw notice(ENCRYPTED());
-  }
+  // ① 암호 확인·손상 복구 (open.js — 나누기·합치기와 같은 열기)
+  const { L, doc, load } = await openPdf(src, ctx, { encrypted: () => tx('pdf.001') });
   const pages = doc.getPageCount();
 
   ctx.progress(tx('pdf.008'), 0.08);
@@ -100,17 +83,6 @@ export async function compressPdf(file, o, ctx) {
     kind: lossless ? 'lossless' : 'lossy', bytes: out, size: out.length,
     mime: 'application/pdf', ext: 'pdf', pages, stats, note: note.join(' · '),
   };
-}
-
-function isPdf(u8) {
-  const head = String.fromCharCode.apply(null, u8.subarray(0, 1024));
-  return head.includes('%PDF-');
-}
-
-/** 트레일러 근처에 /Encrypt 가 있는지 (pdf-lib 가 못 여는 손상 파일용 빠른 검사) */
-function hasEncryptKey(u8) {
-  const tail = u8.subarray(Math.max(0, u8.length - 4096));
-  return String.fromCharCode.apply(null, tail).includes('/Encrypt');
 }
 
 /* ---------- 똑같은 스트림 합치기 (폰트·이미지가 페이지마다 따로 들어간 경우) ---------- */

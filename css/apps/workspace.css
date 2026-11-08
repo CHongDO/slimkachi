@@ -10,6 +10,7 @@
   --ws-file-16: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Cpath d='M3 1h7v1h-7zM3 2h8v1h-8zM3 3h9v1h-9zM3 4h10v1h-10zM3 5h10v1h-10zM3 6h2v1h-2zM11 6h2v1h-2zM3 7h10v1h-10zM3 8h2v1h-2zM11 8h2v1h-2zM3 9h10v1h-10zM3 10h2v1h-2zM11 10h2v1h-2zM3 11h10v1h-10zM3 12h10v1h-10zM3 13h10v1h-10zM3 14h10v1h-10z'/%3E%3C/svg%3E");
   --ws-file-8: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'%3E%3Cpath d='M1 0h4v1h-4zM1 1h5v1h-5zM1 2h6v1h-6zM1 3h1v1h-1zM6 3h1v1h-1zM1 4h6v1h-6zM1 5h1v1h-1zM6 5h1v1h-1zM1 6h6v1h-6z'/%3E%3C/svg%3E");
   --ws-file-4: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 4' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h3v1h-3zM0 1h4v1h-4zM0 2h1v1h-1zM3 2h1v1h-1zM0 3h4v1h-4z'/%3E%3C/svg%3E");
+  --ws-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'%3E%3Cpath d='M7 1h1v1h-1zM6 2h2v1h-2zM0 3h1v1h-1zM5 3h2v1h-2zM0 4h2v1h-2zM4 4h2v1h-2zM1 5h4v1h-4zM2 6h2v1h-2z'/%3E%3C/svg%3E");
   --ws-spark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 5 5' shape-rendering='crispEdges'%3E%3Cpath d='M2 0h1v1h-1zM2 1h1v1h-1zM0 2h5v1h-5zM2 3h1v1h-1zM2 4h1v1h-1z'/%3E%3C/svg%3E");
 
   display: flex; flex-direction: column; gap: var(--space-5);
@@ -17,7 +18,8 @@
 
 /* ---- 픽셀 테두리 공통 (작업실 요소) ---- */
 .ws-head, .ws-hero, .ws-panel, .ws-drop__msg, .ws-seg__opt span, .ws-chip, .ws-item, .ws-item__thumb,
-.ws-badge, .ws-view__status, .ws-cmp__viewport, .ws-note {
+.ws-badge, .ws-view__status, .ws-cmp__viewport, .ws-note,
+.ws-tab, .ws-page__img, .ws-order__item, .ws-order__thumb {
   --bw: var(--line); --bc: var(--frame); --drop: 0 0 0 0 transparent;
   border: 0; border-radius: 0;
   box-shadow:
@@ -459,8 +461,227 @@
 .ws-stats td:last-child { color: var(--text); }
 .ws-view__note { margin: 0; line-height: 1.6; overflow-wrap: anywhere; }
 
+/* ---- PDF 탭 [압축] [나누기] ---- */
+.ws-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); padding: var(--line); }
+.ws-tab {
+  --bc: var(--control-border);
+  height: 36px; padding: 0 var(--space-2);
+  background: var(--control-bg); color: var(--text);
+  font-family: var(--font-bold); font-weight: 700; font-size: var(--font-size-xs);
+  cursor: pointer; white-space: nowrap;
+}
+.ws-tab:hover { background: var(--control-bg-hover); }
+.ws-tab[aria-selected="true"] {
+  --bc: var(--frame);
+  background: var(--accent); color: var(--accent-text);
+  --drop: inset 0 calc(-1 * var(--line)) 0 0 var(--frame);
+}
+.ws-tab:focus-visible { outline: var(--line) solid var(--text-accent); outline-offset: var(--px); }
+:root[lang="ja"] .ws-tab { font-family: var(--font-ui); font-weight: 400; font-size: var(--font-size); }
+
+/* ---- 나누기: 쪽 썸네일 격자 (스크롤 칸 — 보이는 칸만 그림을 그린다) ---- */
+.ws-split__total { font-family: var(--font-ui); font-weight: 400; }
+.ws-pages {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: var(--space-3) var(--space-2);
+  max-height: 360px; overflow: auto; padding: var(--space-1);
+  background: var(--surface-2);
+}
+.ws-pages:empty { display: none; }
+.ws-page {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--space-1);
+  padding: var(--line); border: 0; background: none; color: var(--text-secondary); font: inherit; cursor: pointer;
+}
+.ws-page__img {
+  --bc: var(--border-strong);
+  position: relative; display: block; width: 100%; aspect-ratio: 3 / 4;
+  background: var(--surface-1); overflow: hidden;
+}
+.ws-page__img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
+.ws-page__img img:not([src]) { display: none; }
+.ws-page__n { font-variant-numeric: tabular-nums; line-height: 1.4; }
+.ws-page:hover .ws-page__img { --bc: var(--frame); }
+.ws-page[aria-pressed="true"] .ws-page__img { --bw: var(--px); --bc: var(--text-accent); }
+.ws-page[aria-pressed="true"] .ws-page__n { color: var(--accent-text); background: var(--accent); padding: 0 var(--space-1); }
+.ws-page[aria-pressed="true"] .ws-page__img::before,
+.ws-page[aria-pressed="true"] .ws-page__img::after {    /* 고른 쪽: 오른쪽 위 체크 칸 */
+  content: ""; position: absolute; top: 0; right: 0; width: 16px; height: 16px; z-index: 1;
+  background: var(--accent);
+}
+.ws-page[aria-pressed="true"] .ws-page__img::after {
+  top: 2px; right: 2px; width: 12px; height: 12px; z-index: 2;
+  background: var(--accent-text);
+  -webkit-mask: var(--ws-check) center / 100% 100% no-repeat;
+          mask: var(--ws-check) center / 100% 100% no-repeat;
+}
+.ws-page:focus-visible { outline: var(--line) solid var(--text-accent); outline-offset: var(--line); }
+
+/* 같은 결과 파일 묶음 색 (data-gc 1~6 → theme.css --split-g1~6). 예시 그림·썸네일·결과 미리보기가 같이 쓴다 */
+[data-gc="1"] { --g: var(--split-g1); }
+[data-gc="2"] { --g: var(--split-g2); }
+[data-gc="3"] { --g: var(--split-g3); }
+[data-gc="4"] { --g: var(--split-g4); }
+[data-gc="5"] { --g: var(--split-g5); }
+[data-gc="6"] { --g: var(--split-g6); }
+/* 썸네일: 묶음 색 테두리 + 왼쪽 위 파일 번호 배지 */
+.ws-page[data-gc] .ws-page__img { --bw: var(--px); --bc: var(--g); }
+.ws-page[data-gc][aria-pressed="true"] .ws-page__n { background: var(--g); color: var(--accent-text); }
+.ws-page__g {
+  position: absolute; top: 0; left: 0; z-index: 2;
+  min-width: 16px; height: 16px; padding: 0 2px;
+  background: var(--g); color: var(--accent-text);
+  font-family: var(--font-bold); font-weight: 700; font-size: var(--font-size-xs); line-height: 16px; text-align: center;
+}
+.ws-page__g:empty { display: none; }
+/* 아무것도 안 골라 '전체 쪽 대상'(N쪽마다·한 쪽씩): 전체가 옅게 고른 것처럼 */
+.ws-pages.is-all .ws-page:not([data-gc]) .ws-page__img { --bc: var(--accent); }
+.ws-pages.is-all .ws-page .ws-page__n { background: var(--accent-soft); padding: 0 var(--space-1); }
+
+/* 방식 그림 예시: [1][3][5] → 파일 1개 */
+.ws-ex { display: flex; flex-direction: column; gap: var(--space-1); }
+.ws-ex__fig {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2);
+  padding: var(--space-2); background: var(--surface-2);
+}
+.ws-ex__grp { display: inline-flex; gap: var(--line); }
+.ws-ex__pg {
+  --bw: var(--line); --bc: var(--frame);
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 22px; padding: 0 2px;
+  background: var(--g); color: var(--accent-text);
+  font-family: var(--font-bold); font-weight: 700; font-size: var(--font-size-xs); line-height: 1;
+  box-shadow: 0 calc(-1 * var(--bw)) 0 0 var(--bc), 0 var(--bw) 0 0 var(--bc), calc(-1 * var(--bw)) 0 0 0 var(--bc), var(--bw) 0 0 0 var(--bc);
+}
+.ws-ex__tag, .ws-ex__n { font-family: var(--font-bold); font-weight: 700; font-size: var(--font-size-xs); line-height: 1.5; }
+.ws-ex__tag { color: var(--text-muted); }
+.ws-ex__arrow { color: var(--text-muted); }
+.ws-ex__n { color: var(--text); white-space: nowrap; }
+:root[lang="ja"] .ws-ex__n { font-family: var(--font-ui); font-weight: 400; font-size: var(--font-size); }
+
+/* 결과 미리보기: 만들어질 파일 */
+.ws-split__plan { display: flex; flex-direction: column; gap: var(--space-1); }
+.ws-plan__head { margin: 0; color: var(--text-secondary); font-family: var(--font-bold); font-weight: 700; font-size: var(--font-size-xs); line-height: 1.5; }
+:root[lang="ja"] .ws-plan__head { font-family: var(--font-ui); font-weight: 400; font-size: var(--font-size); }
+.ws-plan { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.ws-plan__item { display: flex; align-items: center; gap: var(--space-2); min-width: 0; line-height: 1.6; }
+.ws-plan__badge {
+  flex: 0 0 auto; min-width: 20px; height: 20px; padding: 0 2px;
+  background: var(--g); color: var(--accent-text); text-align: center;
+  font-family: var(--font-bold); font-weight: 700; font-size: var(--font-size-xs); line-height: 20px;
+}
+/* 가운데 말줄임: 원래 이름 부분이 먼저 줄고 _p1-3.pdf 는 남는다 */
+.ws-plan__name { flex: 1 1 auto; min-width: 0; display: flex; color: var(--text); white-space: nowrap; }
+.ws-plan__base { flex: 0 1 auto; min-width: 1.5em; overflow: hidden; text-overflow: ellipsis; }
+.ws-plan__tail { flex: 0 0 auto; max-width: 75%; overflow: hidden; text-overflow: ellipsis; }   /* 아주 긴 쪽 표시만 끝에서 줄임 */
+/* N쪽마다: [ 2 ]쪽마다 를 한 줄로 */
+.ws-split__every { flex-wrap: nowrap; }
+.ws-split__every .ws-num { flex: 0 0 auto; width: 88px; }
+.ws-plan__pages { flex: 0 0 auto; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.ws-plan__more { color: var(--text-muted); padding-left: calc(20px + var(--space-2)); }
+.ws-plan__msg { margin: 0; line-height: 1.6; color: var(--text-muted); }
+.ws-plan__msg:empty { display: none; }
+.ws-plan__msg[data-tone="warn"] { color: var(--text-warning); }
+.ws-plan__msg[data-tone="danger"] {
+  --bw: var(--line); --bc: var(--border-danger);
+  padding: var(--space-1) var(--space-2); margin: var(--line);
+  background: var(--bg-danger); color: var(--text-danger);
+  box-shadow: 0 calc(-1 * var(--bw)) 0 0 var(--bc), 0 var(--bw) 0 0 var(--bc), calc(-1 * var(--bw)) 0 0 0 var(--bc), var(--bw) 0 0 0 var(--bc);
+}
+
+/* ---- 합치기: 목록 체크박스 · 고르기 막대 · 순서 목록 ---- */
+.ws-item__pick { display: flex; align-items: center; padding-left: var(--space-2); cursor: pointer; }
+.ws-item__pick input { accent-color: var(--accent); width: 18px; height: 18px; margin: 0; cursor: pointer; }
+.ws-item__pick input:disabled { cursor: not-allowed; opacity: .4; }
+.ws-pickbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); }
+.ws-pickbar .btn { flex: 0 0 auto; }
+.ws-pickbar__hint { flex: 1 1 12em; line-height: 1.6; }
+
+.ws-settings.is-merge > .ws-actions { display: none; }
+.ws-order { list-style: none; margin: 0; padding: var(--line); display: flex; flex-direction: column; gap: var(--space-2); }
+/* 좁은 칸(약 280px)에도 들어가게 칸 사이를 4px 로: 손잡이 16 · 번호 · 썸네일 32 · 이름 · ↑ ↓ × 각 24 */
+.ws-order__item {
+  --bc: var(--border-strong);
+  display: flex; align-items: center; gap: var(--space-1);
+  padding: var(--space-1) var(--space-1) var(--space-1) 0;
+  background: var(--surface-1);
+}
+.ws-order__item:focus-visible { outline: var(--line) solid var(--text-accent); outline-offset: var(--line); }
+.ws-order__item.is-dragging { --bc: var(--text-accent); --drop: var(--shadow-pixel); background: var(--accent-soft); z-index: 1; position: relative; }
+.ws-order__grip {
+  flex: 0 0 auto; display: flex; align-items: center; justify-content: center; align-self: stretch;
+  width: 20px; color: var(--text-muted); cursor: grab; touch-action: none;
+}
+.ws-order__item.is-dragging .ws-order__grip { cursor: grabbing; color: var(--text-accent); }
+.ws-order__no { flex: 0 0 auto; min-width: 1em; color: var(--text-secondary); font-variant-numeric: tabular-nums; text-align: right; }
+.ws-order__thumb {
+  --bc: var(--border);
+  position: relative; flex: 0 0 auto; width: 32px; height: 32px; background: var(--surface-2); overflow: hidden; color: var(--text-muted);
+}
+.ws-order__thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.ws-order__thumb img:not([src]) { display: none; }
+.ws-order__body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.ws-order__name { color: var(--text); }
+.ws-order__meta { color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* ↑ ↓ × (키보드·터치용 작은 버튼) */
+.ws-order__btns { flex: 0 0 auto; display: flex; }
+.ws-order__btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 28px; padding: 0; border: 0; background: none;
+  color: var(--text-secondary); cursor: pointer;
+}
+.ws-order__btn:hover:not(:disabled) { background: var(--control-bg-hover); color: var(--text); }
+.ws-order__btn:focus-visible { outline: var(--line) solid var(--text-accent); outline-offset: calc(-1 * var(--line)); }
+.ws-order__btn:disabled { opacity: .3; cursor: default; }
+
+/* 가운데 말줄임: [앞부분…][.pdf] — 앞부분만 줄어든다 */
+.ws-mid { display: flex; min-width: 0; white-space: nowrap; }
+.ws-mid__a { flex: 0 1 auto; min-width: 1.5em; overflow: hidden; text-overflow: ellipsis; }
+.ws-mid__b { flex: 0 0 auto; }
+
+/* 사진 설정 안의 작은 묶음 (쪽 크기 · 방향 · 여백) */
+.ws-merge__photo { gap: var(--space-3); }
+.ws-sub legend { margin-bottom: var(--space-1); color: var(--text-muted); }
+
+/* 만들어질 파일: 이름을 누르면 바꿀 수 있다 */
+.ws-mplan { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.ws-mplan__name {
+  flex: 1 1 auto; padding: 0; border: 0; background: none; font: inherit; text-align: left;
+  color: var(--text-link); cursor: text;
+  text-decoration: underline dotted; text-underline-offset: 4px;
+}
+.ws-mplan__name:hover { color: var(--text); }
+.ws-mplan__name:focus-visible { outline: var(--line) solid var(--text-accent); outline-offset: var(--line); }
+.ws-plan__meta { margin: 0; color: var(--text-muted); line-height: 1.6; padding-left: calc(20px + var(--space-2)); }
+.ws-merge__name { flex: 1 1 auto; flex-wrap: nowrap; min-width: 0; }
+.ws-merge__name .input { flex: 1 1 auto; min-width: 0; }
+
+/* 목록 위: 체크했지만 합칠 수 없는 것 안내 (문서·암호 PDF) */
+.ws-pickbar__warn { flex: 1 1 100%; margin: 0; color: var(--text-warning); line-height: 1.6; }
+
+/* 결과 화면: [이어서 압축하기] + 큰 파일이면 압축 추천 한 줄 */
+.ws-view__next { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.ws-view__nexthint { color: var(--text-warning); line-height: 1.6; }
+.ws-view__nexthint:empty { display: none; }
+
+/* 합치기 그림 예시의 넓은 칸 (글자가 든 칸) */
+.ws-ex__pg--wide { padding: 0 var(--space-1); white-space: nowrap; }
+:root[lang="ja"] .ws-ex__pg--wide { font-family: var(--font-ui); font-weight: 400; font-size: var(--font-size); }
+.ws-merge__msg.is-busy { color: var(--text-accent); }
+.ws-merge__actions .ws-progress { margin-top: 0; }
+
+/* 나누기·합치기 결과에 붙는 작은 안내 */
+.ws-view__fine {
+  margin: 0; color: var(--text-muted); line-height: 1.6;
+  font-family: var(--font-bold); font-weight: 700; font-size: var(--font-size-xs);
+}
+:root[lang="ja"] .ws-view__fine { font-family: var(--font-ui); font-weight: 400; font-size: var(--font-size); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-order__item.is-dragging { --drop: 0 0 0 0 transparent; }
+}
+
 /* ---- 모바일 ---- */
 @media (max-width: 720px) {
+  .ws-pages { max-height: 300px; grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); }
   .ws { gap: var(--space-4); }
   .ws-grid { gap: var(--space-5); }
   .ws-head { padding: var(--space-2) var(--space-3); }

@@ -22,9 +22,27 @@ export const RISK = {
 
 export const LIMITS = {
   // photo = 사진 위험 계수 한도 · pdf·doc = PDF·문서 파일 용량 한도 · count·total = 목록 전체 개수·파일 용량 합
-  base:  { photo: 300 * MB, pdf: 80 * MB,  doc: 80 * MB,  count: 30, total: 300 * MB },   // 모든 기기
-  roomy: { photo: 600 * MB, pdf: 150 * MB, doc: 150 * MB, count: 50, total: 500 * MB },   // deviceMemory ≥ ROOMY_MEMORY_GB
+  // splitParts = PDF 나누기 한 번에 만들 수 있는 결과 파일 수 (나눈 파일은 목록 개수 한도와 따로, 용량 합에는 포함)
+  base:  { photo: 300 * MB, pdf: 80 * MB,  doc: 80 * MB,  count: 30, total: 300 * MB, splitParts: 100 },   // 모든 기기
+  roomy: { photo: 600 * MB, pdf: 150 * MB, doc: 150 * MB, count: 50, total: 500 * MB, splitParts: 200 },   // deviceMemory ≥ ROOMY_MEMORY_GB
 };
+
+/**
+ * 합치기 결과 PDF 용량 어림 (바이트). 합치기 전에 한도(PDF 파일 한도·목록 용량 합)를 넘을지 미리 알리는 데 쓴다.
+ *  PDF·JPG = 파일 용량 그대로 (바이트를 그대로 옮김)
+ *  그 밖의 사진은 다시 압축하지 않고 풀어서 무손실(Flate)로 넣는다 (merge.js) —
+ *    HEIC·AVIF·WebP(찍은 사진) = 화소당 약 2.2바이트 (자잘한 노이즈 때문에 Flate 가 잘 안 줄어 RGB 3바이트의 약 3/4)
+ *    PNG·BMP·TIFF·GIF 등      = 화소당 약 1.5바이트 (그림·화면 캡처가 많아 RGB 3바이트의 절반)
+ *  크기를 모르는 사진은 파일 용량 × 3
+ */
+export const MERGE_RATE = { photoPerPixel: 2.2, losslessPerPixel: 1.5, unknownPerByte: 3 };
+export function mergeEstimate({ kind, size, type, width, height }) {
+  if (kind === 'pdf' || type === 'jpeg') return size;
+  const px = width * height;
+  if (!(px > 0)) return size * MERGE_RATE.unknownPerByte;
+  const photo = type === 'heic' || type === 'avif' || type === 'webp';
+  return Math.max(size, Math.round(px * (photo ? MERGE_RATE.photoPerPixel : MERGE_RATE.losslessPerPixel)));
+}
 export const ROOMY_MEMORY_GB = 8;
 
 /** 이 기기에 적용할 한도 (+ 화면 표시용 환산값) */

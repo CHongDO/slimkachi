@@ -6,7 +6,7 @@
 - **이름**: SlimKachi (슬림까치). 화면·제목·메타·문서에 이 이름을 쓴다. 로고 = [까치 아이콘][SLIM 배지] Kachi.
 - **무엇**: 파일 용량을 줄여 주는 무료 웹 도구. 한 화면(작업실)에서 사진(브라우저가 여는 형식 전부 + HEIC·TIFF)과 PDF를 섞어 올리고,
   파일마다 설정 → 적용 → 확인 → 내보내기. 기능: 사진 용량 줄이기 · 사진 크기 조정 · 사진 형식 변환 · PDF 용량 줄이기
-  · 문서(HWP·HWPX·DOCX·PPTX·XLSX) 용량 줄이기(문서 안 사진만).
+  · 문서(HWP·HWPX·DOCX·PPTX·XLSX) 용량 줄이기(문서 안 사진만) · PDF 나누기 · PDF·사진 합치기.
 - **핵심 가치**: 업로드 없음. 모든 처리가 사용자 브라우저 안에서 끝난다.
 - **배포 대상**: Cloudflare Pages (정적 호스팅, 빌드 없음). 임시 도메인 `slimkachi.pages.dev`
 - **수익화**: Google AdSense → 문서 페이지(pages/)와 SEO 메타 유지 필수
@@ -70,15 +70,26 @@ js/apps/workspace/
   worker.js                   처리 워커 (한 번에 한 파일). options.engine 으로 엔진을 동적 import
   thumbWorker.js              사진 열어 보기(판별) + 썸네일 워커: 형식·크기·투명 영역·움직임, HEIC·TIFF 비교용 미리보기
                               (처리 워커와 별도라 긴 처리 중에도 썸네일이 바로 나옴). 못 열면 code 'unsupported'
+  pageGrid.js                 나누기 화면 쪽 썸네일 격자: 보이는 칸만 그림(IntersectionObserver), Shift+누르기 범위, 화살표 키 이동
+  orderList.js                합치기 순서 목록: 손잡이 끌기(포인터 이벤트 — 터치 포함)·↑↓ 키
 js/engines/                   ★ UI 없는 처리 엔진 (워커 안에서만 import, DOM 사용 금지)
   imageCompress.js            compressImage(file, { mode, format, maxDim }, ctx)  사진 용량 줄이기
   imageResize.js              resizeImage(file, { method, ..., format, mode }, ctx) 비율·픽셀·목표 용량
   pdf/
     compress.js               compressPdf(file, { mode }, ctx)  (암호 확인 → 이미지 → 무손실 정리 → qpdf)
+    open.js                   PDF 열기 공통부: 시그니처·암호(notice + encrypted)·손상 복구 — 압축·나누기·합치기가 같이 씀
+    copy.js                   쪽 옮겨 담기 공통부: 다른 쪽을 가리키는 연결(/P·위젯 /Parent·/B·링크) 끊기 → copyPages →
+                              같은 결과 안 링크는 다시 잇고 나머지는 뺌 → 결과에 없는 쪽 참조 null + 안 쓰는 객체 지우기(tidy)
+    split.js                  splitPdf(file, { method, text, every, base }, ctx) → { kind: 'split', parts: [{ bytes, name, pages, first }] }
+    merge.js                  mergePdf(null, { sources: [{ file, kind, name }], size, orient, margin }, ctx) → { kind: 'merged', bytes, counts, skipped }
+                              사진 = 한 쪽 (size 'a4' + orient auto·portrait·landscape / 'fit' = 사진 크기 1px=0.75pt + 여백),
+                              다시 압축하지 않음: JPG 바이트 그대로(EXIF 회전은 그리는 행렬), 그 밖(PNG·HEIC·WebP…)은 풀어서 무손실 Flate.
+                              암호 PDF 는 빼고(skipped) 계속
     libs.js                   pdf-lib(MIT) · qpdf-wasm(Apache-2.0/ISC) 지연 로더 (워커 전용)
     content.js                페이지 내용을 읽어 이미지가 그려지는 크기 계산 (읽기 전용)
     images.js                 PDF 속 이미지 찾기·풀기·다운샘플·재압축·교체
-    preview.js                pdf.js(Apache-2.0)로 첫 페이지 그림 + 목록용 128px 썸네일 (화면 쪽에서 import, 지연 로딩)
+    preview.js                pdf.js(Apache-2.0)로 첫 페이지 그림 + 목록용 128px 썸네일 + 나누기 화면 쪽 썸네일(openPages)
+                              (화면 쪽에서 import, 지연 로딩. 그리기는 한 줄(chain)로 한 장씩)
   doc/                        문서 용량 줄이기 (워커 전용)
     compress.js               compressDoc(file, { mode }, ctx): 사진만 꺼내 compressImage(format 'same', 모드별 긴 변 2000/2560/그대로) → 제자리
     open.js                   형식 확인(확장자+시그니처) · 보안 문서 거르기 · 사진 목록. fflate(MIT) 지연 로딩
@@ -87,7 +98,8 @@ js/engines/                   ★ UI 없는 처리 엔진 (워커 안에서만 i
     probe.js                  올릴 때 썸네일 워커에서: 형식·보안·사진 수만
 js/shared/                    공용 코드
   util.js                     loadCss, 용량 표기(formatBytes, changeText), renameExt
-  limits.js                   ★ 업로드 한도·위험 계수 상수 (숫자는 여기서만 조정) + assess(file, kind)
+  limits.js                   ★ 업로드 한도·위험 계수 상수 (숫자는 여기서만 조정) + assess(file, kind) + mergeEstimate (합치기 결과 어림)
+  pageRanges.js               쪽 범위 글 "1-3, 5, 8-10" ↔ 쪽 번호, 나누기 묶음(splitGroups)·파일 이름 표시 — 화면·워커 공용, 노드로 시험 가능
   imageSize.js                사진 가로·세로를 파일 헤더만 읽어 구함 (JPEG SOF·PNG·WebP·GIF·BMP·ICO·AVIF/HEIC ispe·TIFF IFD)
   formats.js                  사진 저장 형식 규칙 (SAVEABLE·autoFormat·outputFormat·형식 이름) — 화면·워커 공용
   workerPool.js               모듈 워커 풀 (큐, abort, 충돌 시 재생성)
@@ -147,12 +159,39 @@ robots.txt sitemap.xml        SEO
   출력 형식은 원본 유지 / JPG / WebP. 목표 용량 방식에서는 용량 모드를 쓰지 않는다(엔진의 TARGET_MODE).
 - 처리 워커는 1개(한 번에 한 파일). 처리 중 다시 적용·삭제·되돌리기는 `pool.abort` 로 워커를 끊고 새로 시작.
 - 결과는 메모리 Blob 으로만 보관. 덮어쓰기·되돌리기·삭제 때 object URL(결과·미리보기)을 반드시 revoke.
+- 목록에서 지우기(removeItem): 작업 취소·썸네일 대기 취소·URL 해제. 선택된 파일을 지우면 다른 파일을 고르지 않고 설정·결과 칸을
+  처음 빈 상태로(clearSettingsLeftovers·clearViewLeftovers 가 숨은 칸에 남은 값·그림까지 비움). 다른 파일을 지우면 선택은 그대로.
+  나눈 파일을 지우면 원본의 나누기 결과에서 빼고(forgetPart), 다 지우면 원본은 '나누기 전'으로. 합치기 화면이 열려 있으면 순서에서 빼고
+  2개 미만이면 닫는다. 지운 뒤 포커스는 다음 파일(없으면 앞 파일 → 업로드 칸). [모두 지우기]는 한 번에 지우고 업로드 칸으로 포커스.
 - 내보내기: 완료된 파일만 ZIP(fflate, level 0), 이름은 `원본이름_min.확장자`. 개별 다운로드도 가능.
   내보내지 않은 결과(원본 유지 제외)가 있으면 beforeunload 경고.
 - 배치: 넓은 화면 설정|목록|결과, 중간 폭 설정|(목록/결과), ≤720px 목록→설정→결과.
 - 업로드 칸은 하나(종류 자동 판별): 한 줄 안내 + '이 기기 기준' 한도 + 서버 전송 없음. 그 아래(칸 밖) 접이식 '지원 형식 보기'.
 - 목록 필터 칩 [전체][사진][문서] — 보기만 바뀜. PDF·문서는 '문서'. 주소 #photo · #doc 로도 지정(history.replaceState).
   지금 필터에서 안 보이는 종류를 올리면 '전체'로, 고른 파일이 숨겨지면 보이는 첫 파일을 고른다.
+- PDF 나누기·합치기 (엔진 split·merge, 둘 다 pdf-lib copyPages — 래스터화 없음):
+  · PDF 를 고르면 설정 위 탭 [압축] [나누기] (item.settings.tab). 나누기 상태는 item.split 에 따로(job·status·result) — 나눠도
+    압축 결과는 그대로, 압축 결과가 있으면 그 결과를 나눈다. 쪽 범위 글(settings.split.text)이 '고른 쪽'의 기준이고 썸네일은 그 글을 고친다.
+    방식 one·ranges·every·each. 결과마다 새 항목(item.made = { by:'split', from, first })이 원본 바로 아래에, 이름 원래이름_p1-3.pdf.
+    방식마다 그림 예시(같은 결과 파일 칸 = 같은 색, theme.css --split-g1~6 · 위 글자 --accent-text) + 설명 한 줄.
+    고른 쪽만 하나로·범위마다 따로 = '쪽 고르기'(비면 적용 잠김), N쪽마다·한 쪽씩 = '나눌 범위 (비우면 전체)' — 비면 전체 쪽,
+    고르면 그 쪽들만(pageRanges.splitGroups). 방식을 바꿔도 고른 쪽은 유지. 범위마다 따로·N쪽마다는 썸네일에 묶음 색 테두리 + 파일 번호 배지.
+    설정 아래 결과 미리보기(파일 번호·이름 가운데 말줄임·쪽 수, 5개 넘으면 4개 + '… 외 N개'), 잘못된 입력이면 그 자리에 빨간 안내('15쪽은 없습니다').
+    다시 나누기·[나눈 파일 지우기] = 그 원본에서 나눈 항목을 목록에서 지운다. 한 번에 최대 limits.splitParts(100/200)개,
+    나눈 파일은 목록 개수 한도와 따로(용량 합에는 포함).
+  · 합치기: 모든 줄에 체크박스(형식 확인 중만 잠김). 합칠 수 있는 것(mergeable) = PDF·사진 중 암호 아님 — 문서·암호 PDF 는 체크해도 빠지고
+    목록 위에 안내(ws.276·277). 열기 암호 PDF 는 pdf.js 미리보기(PasswordException)에서, 권한 암호만 있는 PDF 는 워커가 열어 보고
+    알게 되어 빼고 합친 뒤 결과 화면에 안내. 2개 이상이면 목록 위 [N개 합치기] → 왼쪽 합치기 화면(.ws-set[data-kind=merge]):
+    그림 예시 · 순서(끌기·↑↓ 버튼·↑↓ 키·×, [이름순][올린 순]) · 사진 설정(사진이 있을 때만: 쪽 크기 A4/사진 크기 그대로,
+    방향 자동/세로/가로, 여백 없음/좁게 10mm/보통 20mm) · 만들어질 파일(이름 눌러서 바꾸기 · 총 N쪽 · 예상 용량).
+    처리 결과가 있는 파일은 결과를 넣는다(예: JPG 로 바꾼 HEIC → JPG 바이트 그대로).
+    mergeEstimate 로 어림한 용량이 PDF 한도·목록 용량 합을 넘거나 목록 개수가 차면 시작 전에 막고 안내. 끝나면 새 항목(made.by 'merge')을
+    골라 두고 원본은 그대로. 결과 화면 [이어서 압축하기] → 그 PDF 의 [압축] 탭(10MB 넘으면 '제출용이라면 압축을 추천해요').
+    작업 번호 → { item, track: 'main'|'split'|'merge' }.
+  · 만든 파일(item.made)은 처리 전에도 그 자체가 내보낼 것(productOf) — 개별 받기·전체 ZIP·beforeunload 경고에 포함. 목록 썸네일은 보일 때만 그린다.
+  · 결과 화면: 나누기 "원본 12쪽 → 3개 파일(3쪽·1쪽·3쪽)", 나누기·합치기 결과에 작게 '책갈피·양식 입력칸·일부 링크는 빠졌을 수 있음'.
+  · 쪽 썸네일은 pdf.js 를 화면 쪽에서 그린다(문서 해석은 pdf.js 자체 워커) — pdf.js 그리기는 document·requestAnimationFrame 이 필요해
+    thumbWorker 에서는 못 돌린다. 탭이 숨겨지면 rAF 가 멈춰 그리기도 멈췄다가 다시 보이면 이어진다.
 - 문서(kind 'doc', 확장자 hwp·hwpx·docx·pptx·xlsx): 올릴 때 limits.js 가 시그니처(ZIP 'PK' / CFB D0CF11E0) 확인,
   썸네일 워커가 probe.js 로 사진 수·보안 확인 → 보안 문서는 목록에 '처리 불가'로 남고 적용 버튼 잠김.
   설정은 용량 모드만 + '문서 안 사진 N장'. 결과: 용량·감소율·줄인 사진 수 + 가장 큰 사진 하나 전후 비교(result.compare Blob),
@@ -173,7 +212,7 @@ robots.txt sitemap.xml        SEO
   전체 폭 = 속도 × 0.64 − 17칸 — 노드로 잰 넘을 수 있는 최대 폭(톡 ≈ 0.545v−18, 꾹 ≈ 0.727v−21) 사이라 톡은 걸리고 꾹·활강은 넘는다
   (느리면 거의 붙고 빠르면 벌어짐 — 딱 붙이면 톡으로도 넘음). 연·높은 돌탑과는 같이 안 놓음. 자리마다 한 번 굴려 쌍|단독 연|붙은 두 개|보통 중 하나.
   간격 무작위 폭 gapSpread 0.6·여유 gapPad 8. 900점에 게임 화면 안에서만 낮↔밤 한 번 — 3초 12단계로 천천히(DAYNIGHT.fade·fadeSteps → <html data-mode-fade>:
-  theme.css 끝에서 낮/밤 값이 다른 색 변수 72개를 @property <color> 로 등록해 변수째 보간, scene.css 하늘 묶음·game.css 밤 외곽선도 같은 길이.
+  theme.css 끝에서 낮/밤 값이 다른 색 변수 78개를 @property <color> 로 등록해 변수째 보간, scene.css 하늘 묶음·game.css 밤 외곽선도 같은 길이.
   낮/밤에 다른 색 변수를 새로 만들면 그 목록에도 넣을 것. 새 판·닫기는 바로, 끝난 판 '다시' 안내 때 돌아가는 건 천천히)(<html data-mode> 만, ft-mode 저장값은 그대로,
   '다시' 안내·새 판·닫기 때 원래대로). 같은 땅 장애물은 최대 2번 연속(OBSTACLE.maxRepeat, 사이의 연은 셈에서 뺌).
   장애물 간격 ≥ 그 속도의 꾹 점프 거리(활강 없이, rules.js 가 config 로 계산) — 값을 바꾸면 노드로 봇을 돌려 끝까지 살아남는지 확인할 것.
@@ -353,6 +392,8 @@ python -m http.server 5500     # → http://localhost:5500
 - [ ] 크기 조절: 비율·픽셀·목표 용량 세 방식, 목표 용량 결과 파일이 실제로 목표 이하인지(탐색기 속성의 바이트 수)
 - [ ] PDF: 스캔본·사진 많은 PDF·글자 위주 PDF로 감소율 확인, 결과 PDF에서 글자 선택·검색(Ctrl+F),
       암호 PDF 안내 문구, 사진만 올렸을 때 pdf-lib·pdf.js·qpdf·engines/pdf 를 내려받지 않는지(Network 탭)
+- [ ] PDF 나누기·합치기: 100쪽 PDF 한 쪽씩(저사양 기기), 나눈 파일 글자 선택·검색, 문서 안 링크(같은 결과 안은 이어지고 밖은 빠짐),
+      암호 PDF 안내, 사진+PDF 합치기(아이폰 HEIC·회전된 JPG 방향, 가로 사진 A4 가로), 순서 끌기(터치)·↑↓, 합친 파일 바로 압축, ZIP 에 포함
 - [ ] 문서: 사진 많은 HWP·HWPX·DOCX·PPTX·XLSX 결과를 실제 한글·오피스에서 열어 확인, 암호·배포용 HWP·암호 DOCX 안내, 사진 없는 문서 원본 유지
 - [ ] 업로드 한도: 4,800만 화소 사진(제외)·2,400만(추가)·200MB PDF(제외)·40장(30장만)·25장+10장(5장만), 팝업 키보드 조작
 - [ ] 형식: BMP(→PNG 감소), 움직이는 GIF(첫 장면 안내), 아이폰 HEIC(→JPG), TIFF(회전 포함), AVIF, PSD·SVG·문서(지원 안 함 안내),

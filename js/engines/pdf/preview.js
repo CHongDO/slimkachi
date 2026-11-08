@@ -4,6 +4,7 @@
    pdf.js 5.4.296 (Apache-2.0)를 PDF 파일을 처음 올렸을 때만
    jsDelivr 에서 불러온다. 문서 해석은 pdf.js 자체 워커가 하고,
    화면에서는 첫 페이지 한 장만 그려 JPEG 그림으로 만든다.
+   나누기 화면의 쪽 썸네일(openPages)도 같은 줄(chain)에서 보이는 쪽만 작게 그린다.
    한 번에 하나씩 그려 화면이 버벅이지 않게 한다.
    파일 데이터는 이 브라우저 안에서만 쓰이고 어디로도 전송되지 않는다.
    ============================================================ */
@@ -23,6 +24,15 @@ function pdfjs() {
 }
 
 let chain = Promise.resolve();
+const docOptions = (data) => ({
+  data,
+  isEvalSupported: false,
+  standardFontDataUrl: `${BASE}/standard_fonts/`,
+  cMapUrl: `${BASE}/cmaps/`,
+  cMapPacked: true,
+  wasmUrl: `${BASE}/wasm/`,
+  iccUrl: `${BASE}/iccs/`,
+});
 
 /**
  * PDF(Blob/File)의 첫 페이지를 그림으로.
@@ -30,20 +40,13 @@ let chain = Promise.resolve();
  * @returns {Promise<{ url, thumbUrl?, width, height, pages }>} url·thumbUrl 은 쓰고 나서 revoke 해야 한다
  */
 const THUMB = 128;
-export function renderFirstPage(blob, maxWidth = 900, withThumb = false) {
+// alive() 가 false 면(그새 목록에서 지운 파일) 차례가 와도 그리지 않고 null
+export function renderFirstPage(blob, maxWidth = 900, withThumb = false, alive = () => true) {
   const job = chain.then(async () => {
+    if (!alive()) return null;
     const lib = await pdfjs();
     const data = new Uint8Array(await blob.arrayBuffer());
-    const task = lib.getDocument({
-      data,
-      isEvalSupported: false,
-      standardFontDataUrl: `${BASE}/standard_fonts/`,
-      cMapUrl: `${BASE}/cmaps/`,
-      cMapPacked: true,
-      wasmUrl: `${BASE}/wasm/`,
-      iccUrl: `${BASE}/iccs/`,
-    });
-    const pdf = await task.promise;
+    const pdf = await lib.getDocument(docOptions(data)).promise;
     try {
       const page = await pdf.getPage(1);
       const base = page.getViewport({ scale: 1 });
@@ -74,4 +77,43 @@ export function renderFirstPage(blob, maxWidth = 900, withThumb = false) {
   });
   chain = job.catch(() => {});
   return job;
+}
+
+/**
+ * 나누기 화면의 쪽 썸네일: 문서를 한 번 열어 두고, 보이는 쪽만 작게(긴 변 size px) 그린다.
+ * 그리기는 첫 페이지 미리보기와 같은 줄(chain)에 서서 한 장씩 — 화면이 버벅이지 않게.
+ * close() 뒤에 줄에 남은 그리기는 건너뛴다.
+ * @returns {Promise<{ pages, thumb(n, size): Promise<Blob|null>, close() }>}
+ */
+export async function openPages(blob) {
+  const lib = await pdfjs();
+  const data = new Uint8Array(await blob.arrayBuffer());
+  const pdf = await lib.getDocument(docOptions(data)).promise;
+  let closed = false;
+  return {
+    pages: pdf.numPages,
+    thumb(n, size) {
+      const job = chain.then(async () => {
+        if (closed) return null;
+        const page = await pdf.getPage(n);
+        const base = page.getViewport({ scale: 1 });
+        const viewport = page.getViewport({ scale: size / Math.max(base.width, base.height) });
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.ceil(viewport.width));
+        canvas.height = Math.max(1, Math.ceil(viewport.height));
+        await page.render({ canvas, viewport }).promise;
+        page.cleanup();
+        const out = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.8));
+        canvas.width = canvas.height = 0;
+        return out;
+      });
+      chain = job.catch(() => {});
+      return job.catch(() => null);
+    },
+    close() {
+      if (closed) return;
+      closed = true;
+      chain = chain.then(() => pdf.destroy()).catch(() => {});
+    },
+  };
 }

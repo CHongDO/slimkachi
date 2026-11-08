@@ -192,6 +192,10 @@
   --bg-warning:  #FDEED5;  --border-warning: #E2A84B;  --text-warning: #81510C;
   --bg-danger:   #FBE3E3;  --border-danger:  #E08080;  --text-danger:  #A22B2B;
 
+  /* ---- PDF 나누기: 같은 결과 파일로 묶이는 쪽 색 (6색을 돌려 씀). 위 글자는 --accent-text (대비 4.5:1 이상) ---- */
+  --split-g1: #E8799F;  --split-g2: #5BA4E6;  --split-g3: #6CC24A;
+  --split-g4: #E2A84B;  --split-g5: #A88BE0;  --split-g6: #4CC3B5;
+
   /* ---- 이미지 비교 뷰어 ---- */
   --overlay-bg: rgba(46, 34, 48, 0.82);
   --overlay-text: #FFF8F1;
@@ -252,6 +256,9 @@
   --bg-success:  #24382B;  --border-success: #7FD45C;  --text-success: #9BE07C;
   --bg-warning:  #3B3022;  --border-warning: #FFC86B;  --text-warning: #FFC86B;
   --bg-danger:   #3F2333;  --border-danger:  #FF8FA3;  --text-danger:  #FF9FB0;
+
+  --split-g1: #FF9EC4;  --split-g2: #7FB8FF;  --split-g3: #7FD45C;
+  --split-g4: #FFC86B;  --split-g5: #BFA3FF;  --split-g6: #66D9C9;
 
   --overlay-bg: rgba(20, 16, 32, 0.84);
   --overlay-text: #F2EAF7;
@@ -347,6 +354,12 @@
 @property --bg-danger { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --border-danger { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --text-danger { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --split-g1 { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --split-g2 { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --split-g3 { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --split-g4 { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --split-g5 { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --split-g6 { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --overlay-bg { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --overlay-text { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --divider { syntax: '<color>'; inherits: true; initial-value: transparent; }
@@ -421,6 +434,12 @@
     --bg-danger,
     --border-danger,
     --text-danger,
+    --split-g1,
+    --split-g2,
+    --split-g3,
+    --split-g4,
+    --split-g5,
+    --split-g6,
     --overlay-bg,
     --overlay-text,
     --divider,

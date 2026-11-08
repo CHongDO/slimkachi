@@ -6,6 +6,8 @@
      'resize'   → js/engines/imageResize.js    (사진 크기 조절·목표 용량)
      'pdf'      → js/engines/pdf/compress.js   (PDF 용량 줄이기)
      'doc'      → js/engines/doc/compress.js   (문서 안 사진 줄이기: HWP·HWPX·DOCX·PPTX·XLSX)
+     'split'    → js/engines/pdf/split.js      (PDF 나누기)
+     'merge'    → js/engines/pdf/merge.js      (PDF·사진 합치기 — file 대신 options.sources)
    엔진은 처음 쓸 때만 불러오므로, 사진만 다루면 PDF 라이브러리는 받지 않는다.
    파일은 이 워커 안에서만 다뤄지며 어디로도 전송되지 않습니다.
    ============================================================ */
@@ -18,6 +20,8 @@ const ENGINES = {
   resize: () => import('../../engines/imageResize.js').then((m) => m.resizeImage),
   pdf: () => import('../../engines/pdf/compress.js').then((m) => m.compressPdf),
   doc: () => import('../../engines/doc/compress.js').then((m) => m.compressDoc),
+  split: () => import('../../engines/pdf/split.js').then((m) => m.splitPdf),
+  merge: () => import('../../engines/pdf/merge.js').then((m) => m.mergePdf),
 };
 
 serve(async (file, options, ctx) => {
