@@ -319,6 +319,6 @@ docs/                 README용 마스코트 · 스크린샷
 
 - 올린 파일은 **서버로 전송되지 않습니다.** 처리와 결과 모두 브라우저 메모리 안에서만 이루어지고, 탭을 닫으면 사라집니다.
 - 인터넷으로 오가는 것은 처리용 프로그램 코드와 광고뿐입니다. 브라우저 개발자 도구의 **네트워크 탭**을 열어 두고 파일을 처리해 보면 직접 확인할 수 있습니다.
-- 자세한 내용은 [개인정보처리방침](https://slimkachi.pages.dev/pages/privacy.html)을 참고해 주세요.
+- 자세한 내용은 [개인정보처리방침](https://slimkachi.pages.dev/pages/privacy)을 참고해 주세요.
 
 <p align="center"><sub>© 2026 SlimKachi</sub></p>

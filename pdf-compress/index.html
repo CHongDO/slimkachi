@@ -37,6 +37,7 @@
   {
     "@context": "https://schema.org",
     "@graph": [
+      {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "슬림까치", "item": "https://slimkachi.pages.dev/"}, {"@type": "ListItem", "position": 2, "name": "PDF 용량 줄이기", "item": "https://slimkachi.pages.dev/pdf-compress/"}]},
       {
         "@type": "SoftwareApplication",
         "name": "슬림까치 PDF 용량 줄이기",
@@ -96,6 +97,7 @@
   <link rel="stylesheet" href="../css/theme.css">
   <link rel="stylesheet" href="../css/scene.css">
   <link rel="stylesheet" href="../css/shell.css">
+  <link rel="stylesheet" href="../css/sitenav.css">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1007112926199900"
@@ -137,9 +139,9 @@
         <a href="../ja/" hreflang="ja" lang="ja">日本語</a>
       </nav>
       <div class="app-header__links">
-        <a href="../pages/about.html">소개</a>
-        <a href="../pages/features.html">기능</a>
-        <a href="../pages/privacy.html">개인정보</a>
+        <a href="../pages/about">소개</a>
+        <a href="../pages/features">기능</a>
+        <a href="../pages/privacy">개인정보</a>
       </div>
       <button type="button" class="btn app-header__game" data-game-open title="까치런 — 크롬 공룡 게임 오마주 미니게임" aria-label="까치런 — 크롬 공룡 게임 오마주 미니게임"><svg class="ico" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M3 3h10v1h-10zM2 4h12v1h-12zM1 5h14v1h-14zM1 6h3v1h-3zM5 6h7v1h-7zM13 6h2v1h-2zM1 7h2v1h-2zM6 7h4v1h-4zM11 7h4v1h-4zM1 8h3v1h-3zM5 8h10v1h-10zM1 9h14v1h-14zM1 10h5v1h-5zM10 10h5v1h-5zM1 11h4v1h-4zM11 11h4v1h-4zM2 12h2v1h-2zM12 12h2v1h-2z"/></svg><span>까치런</span></button>
       <button type="button" class="btn btn--icon" data-theme-toggle aria-pressed="false" title="밤 모드로 바꾸기"><svg class="ico" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M6 1h1v1h-1zM4 2h2v1h-2zM3 3h3v1h-3zM2 4h4v1h-4zM1 5h5v1h-5zM1 6h5v1h-5zM1 7h5v1h-5zM1 8h6v1h-6zM1 9h7v1h-7zM1 10h13v1h-13zM2 11h11v1h-11zM3 12h9v1h-9zM4 13h7v1h-7zM6 14h3v1h-3z"/></svg><span class="sr-only">밤 모드로 바꾸기</span></button>
@@ -147,6 +149,8 @@
 
     <!-- ====== 본문: 앱이 마운트되는 영역 ====== -->
     <main class="app-main">
+      <!-- 이동 경로 (JSON-LD BreadcrumbList 와 같은 내용) -->
+      <nav class="crumbs" aria-label="이동 경로"><ol><li><a href="../">슬림까치</a></li><li><span aria-current="page">PDF 용량 줄이기</span></li></ol></nav>
       <!-- 검색엔진/스크린리더용 페이지 제목 -->
       <h1 class="sr-only">PDF 용량 줄이기 — 글자 선택 그대로 PDF 압축 (슬림까치, 서버 전송 없이 무료)</h1>
       <div id="app-root"></div>
@@ -170,8 +174,9 @@
             <li><strong>[적용]</strong>을 누르고, 오른쪽에서 첫 쪽 전후 그림과 줄어든 용량을 확인합니다.</li>
             <li>파일을 받거나 [전체 내보내기]로 ZIP 하나에 받습니다. 이름은 <code>원래이름_min.pdf</code>입니다.</li>
           </ol>
-          <p>다른 작업도 같은 작업실에서 이어서 할 수 있습니다:
-            <a href="../pdf-split/">PDF 나누기</a> · <a href="../pdf-merge/">PDF 합치기</a> · <a href="../hwp-compress/">한글 용량 줄이기</a> · <a href="../">사진·문서까지 한곳에서 (작업실 처음 화면)</a></p>
+          <p>필요한 쪽만 → <a href="../pdf-split/">PDF 나누기</a><br>
+            여러 개를 하나로 → <a href="../pdf-merge/">PDF 합치기</a><br>
+            한글 문서라면 → <a href="../hwp-compress/">한글 파일 용량 줄이기</a></p>
         </section>
 
         <section class="intro__sec intro__faq">
@@ -186,6 +191,18 @@
           <p>암호(보안)가 설정된 PDF는 손대지 않고 안내만 합니다. 암호를 해제한 뒤 다시 올려 주세요.</p>
         </section>
       </article>
+      <!-- ====== 이런 것도 할 수 있어요 — 모든 페이지에 같은 조각(JS 로 끼우지 않음). 고칠 때는 모든 페이지를 함께 ====== -->
+      <nav class="more-tools" aria-labelledby="more-tools-title">
+        <h2 class="more-tools__title" id="more-tools-title">이런 것도 할 수 있어요</h2>
+        <ul>
+          <li><a href="../">사진 용량 줄이기</a></li>
+          <li><a href="../pdf-split/">PDF 나누기</a></li>
+          <li><a href="../pdf-merge/">PDF 합치기</a></li>
+          <li><span aria-current="page">PDF 용량 줄이기</span></li>
+          <li><a href="../hwp-compress/">한글 파일 용량 줄이기</a></li>
+          <li><a href="../guide/hwp">한글 그림 용량 줄이기 가이드</a></li>
+        </ul>
+      </nav>
     </main>
 
     <!-- ====== 푸터 ====== -->
@@ -194,17 +211,12 @@
         <svg class="ico" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M7 1h2v1h-2zM5 2h2v1h-2zM9 2h2v1h-2zM3 3h2v1h-2zM11 3h2v1h-2zM2 4h1v1h-1zM13 4h1v1h-1zM2 5h1v1h-1zM10 5h2v1h-2zM13 5h1v1h-1zM2 6h1v1h-1zM9 6h2v1h-2zM13 6h1v1h-1zM2 7h1v1h-1zM4 7h2v1h-2zM8 7h2v1h-2zM13 7h1v1h-1zM3 8h1v1h-1zM5 8h4v1h-4zM12 8h1v1h-1zM3 9h1v1h-1zM6 9h2v1h-2zM12 9h1v1h-1zM4 10h1v1h-1zM11 10h1v1h-1zM5 11h1v1h-1zM10 11h1v1h-1zM6 12h1v1h-1zM9 12h1v1h-1zM7 13h2v1h-2z"/></svg>
         파일은 브라우저 안에서만 처리되며 서버로 전송되지 않습니다.
       </p>
-      <nav class="app-footer__tools" aria-label="기능별 바로가기">
-        <a href="../pdf-split/">PDF 나누기</a>
-        <a href="../pdf-merge/">PDF 합치기</a>
-        <a href="../pdf-compress/" aria-current="page">PDF 용량 줄이기</a>
-        <a href="../hwp-compress/">한글 용량 줄이기</a>
-      </nav>
       <span>© <span id="year"></span> SlimKachi</span>
       <span class="app-footer__spacer"></span>
-      <a href="../pages/about.html">사이트 소개</a>
-      <a href="../pages/features.html">기능 소개</a>
-      <a href="../pages/privacy.html">개인정보처리방침</a>
+      <a href="../pages/about">사이트 소개</a>
+      <a href="../pages/features">기능 소개</a>
+      <a href="../pages/updates">업데이트 소식</a>
+      <a href="../pages/privacy">개인정보처리방침</a>
     </footer>
   </div>
 

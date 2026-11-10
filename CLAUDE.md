@@ -58,6 +58,7 @@ css/theme.css                 테마 변수: 공통 토큰 + 테마 팩(landscap
 css/scene.css                 배경 장면 레이어 구조 (하늘·구름·까치·별·별똥별·달·먼 산·먼 나무·안개·가까운 산·가까운 나무·땅·꽃잎/반딧불)
 css/shell.css                 셸 레이아웃 + 공용 컨트롤(.btn .btn--icon .input .card ...)
 css/page.css                  문서 페이지 공용 스타일
+css/sitenav.css               이동 경로(.crumbs)·'이런 것도 할 수 있어요'(.more-tools) — 메인·입구·문서 페이지 모두 불러옴
 assets/themes/landscape/      배경 마스크 SVG (산 2겹·풀·흙·꽃잎, 합계 약 3KB)
 css/apps/workspace.css        작업실 화면 스타일 (mount 시 <link> 로드)
 js/main.js                    진입점 (i18n 사전을 기다리느라 DOMContentLoaded 뒤에 실행될 수 있어 readyState 확인)
@@ -121,7 +122,8 @@ js/game/                      ★ 까치런(미니게임) — 헤더 [까치런]
   rules.js                    규칙·물리 (DOM 없음, 고정 간격 1/120초, 칸 단위) — 노드에서 시뮬레이션 가능
   sprites.js                  칸 그림: 까치 두 마리는 magpie.js SPECIES 재사용(+ 갓·두루마리 조각, 펼쳐진 두루마리), 장독대·돌탑·짚단·방패연은 새로 그림
 css/game.css                  까치런 스타일 (처음 열 때 불러옴). 색 = --magpie-* · --kr-*(theme.css, 밤엔 어둡게)
-pages/                        about / features / privacy (애드센스 심사용)
+pages/                        about / features / privacy / updates(업데이트 소식, 최신이 위) (애드센스 심사용)
+guide/hwp.html                한글 그림 용량 줄이기 가이드 (한글 2024 에서 직접 하는 방법. 바로 하기는 /hwp-compress/)
 robots.txt sitemap.xml        SEO
 ```
 
@@ -133,7 +135,20 @@ robots.txt sitemap.xml        SEO
   pdf-merge = 올린 PDF·사진을 체크(문서 제외), 2개 이상이면 [N개 합치기]를 주 버튼 색으로.
 - 영어·일본어 입구는 아직 없음. 만들 때는 en/pdf-split/ 처럼 같은 구조 + 같은 data-intent (안내 문구는 en·ja 사전에 이미 있음),
   hreflang 으로 서로 잇고 sitemap 에 추가.
-- 링크: 메인 소개글 '기능별로 바로 가기'와 푸터 .app-footer__tools(메인·입구 페이지), /guide/hwp ↔ /hwp-compress/ (가이드 = 방법 설명, 입구 = 바로 하기).
+- 링크: 메인 소개글 섹션 끝 한 줄('… → PDF 용량 줄이기' 식), 입구·가이드 본문의 '… → 기능 이름' 줄, 모든 페이지의 '이런 것도 할 수 있어요'.
+  /guide/hwp ↔ /hwp-compress/ (가이드 = 한글 프로그램에서 직접 하는 방법, 입구 = 바로 하기). 같은 링크를 한 페이지 본문에 두 번 넣지 않는다.
+
+## 사이트 주소·링크 규칙 (검색용)
+- **주소는 리디렉션 없는 최종 형태만**(Cloudflare Pages 는 .html 을 확장자 없는 주소로 308 리디렉션한다):
+  `/pages/about` `/pages/features` `/pages/privacy` `/pages/updates` `/guide/hwp` (확장자 없음),
+  폴더형은 끝 슬래시 `/pdf-split/` `/pdf-merge/` `/pdf-compress/` `/hwp-compress/` `/en/` `/ja/`, 처음 화면은 `/`(index.html 을 쓰지 않음).
+  canonical·og:url·JSON-LD·sitemap·모든 <a href> 가 이 형태. 상대 경로도 결과가 이 형태여야 한다(예: pages/ 안에서는 href="about").
+- **'이런 것도 할 수 있어요' 블록(nav.more-tools)** 은 메인·입구 4개·가이드·about·features·privacy·updates 의 HTML 에 직접 쓴다
+  (JS 로 끼우지 않음 — 검색엔진이 읽게). 순서: 사진 용량 줄이기(/) · PDF 나누기 · PDF 합치기 · PDF 용량 줄이기 · 한글 파일 용량 줄이기 ·
+  한글 그림 용량 줄이기 가이드. 지금 페이지는 링크 대신 `<span aria-current="page">`.
+  **★ 블록을 고칠 때는 모든 페이지를 함께 고칠 것**(항목·이름·순서가 페이지마다 같아야 함). en/ja 에는 없음(한국어 페이지 묶음).
+- **이동 경로(nav.crumbs)**: 메인·en·ja 를 뺀 모든 페이지 맨 위 '슬림까치 › 페이지 이름' + 같은 내용의 JSON-LD BreadcrumbList.
+- 새 페이지를 만들면: 위 블록·이동 경로 넣기, 다른 모든 페이지의 블록에 항목 추가(필요하면), sitemap.xml, 푸터·doc__nav 링크.
 
 ## 다국어 (ko / en / ja)
 - 언어는 각 페이지의 `<html lang>`. `js/i18n/index.js` 가 최상위 await 로 그 사전을 불러 두고, 코드에서는 `tx('키', { 이름: 값 })`.
@@ -391,7 +406,7 @@ python -m http.server 5500     # → http://localhost:5500
 
 ## 배포 전 체크리스트
 - [ ] `slimkachi.pages.dev` → 실제 배포 주소로 전부 치환
-      (index.html의 canonical·og:url·og:image·JSON-LD url, pages/*.html canonical, sitemap.xml, robots.txt,
+      (index.html의 canonical·og:url·og:image·JSON-LD url, pages/* canonical·BreadcrumbList, guide/hwp, sitemap.xml, robots.txt,
        입구 페이지 4개 pdf-split/ pdf-merge/ pdf-compress/ hwp-compress/ 의 canonical·og:url·og:image·twitter:image·JSON-LD url)
 - [ ] `ads.txt`가 루트에서 열리는지 확인 (`https://<주소>/ads.txt`)
 - [ ] AdSense 스크립트 client id(`ca-pub-1007112926199900`)가 ads.txt의 pub id와 일치
@@ -413,4 +428,5 @@ python -m http.server 5500     # → http://localhost:5500
 - [ ] 형식: BMP(→PNG 감소), 움직이는 GIF(첫 장면 안내), 아이폰 HEIC(→JPG), TIFF(회전 포함), AVIF, PSD·SVG·문서(지원 안 함 안내),
       투명 PNG→JPG(배경색·안내), JPG→PNG(용량 증가 안내), 내보내기 파일명 확장자, HEIC·TIFF 를 넣을 때만 libheif·utif·pako 를 받는지(Network)
 - [ ] 다국어: /en/·/ja/ 에서 화면에 한국어가 남지 않는지(언어 전환 '한국어' 링크 제외), hreflang·sitemap(xhtml:link) 확인
-- [ ] 새 기능 추가 시 features.html·sitemap.xml 갱신 (+ en/ja 소개글, 세 사전)
+- [ ] 새 기능 추가 시 features.html·sitemap.xml·updates.html 갱신 (+ en/ja 소개글, 세 사전)
+- [ ] 배포 후 내부 링크가 리디렉션 없이 200 인지(`curl -sI https://<주소>/pages/about` 가 200, .html 주소는 308)
