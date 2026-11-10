@@ -166,6 +166,19 @@ strong, b { font-weight: 400; color: var(--text); }   /* Galmuri14 에는 굵은
 }
 .intro p { margin: 0 0 var(--space-3); color: var(--text-secondary); }
 .intro__faq h3::before { content: "Q. "; color: var(--text-accent); }
+/* 본문 속 링크 (소개글·문서·가이드 공통 — page.css 에도 같은 규칙): 사이트 링크 색 + 픽셀 점 밑줄(2px 점·2px 틈),
+   가리키면 꽉 찬 밑줄 + 옅은 강조 바탕. 대비: 낮 6.1:1(바탕 5.3:1) · 밤 8.7:1(바탕 7.3:1). 줄이 바뀌어도 줄마다 밑줄 */
+.intro a {
+  color: var(--text-link); text-decoration: none;
+  background-image: linear-gradient(90deg, currentColor 50%, transparent 0);
+  background-repeat: repeat-x; background-position: 0 100%; background-size: 4px var(--line);
+  padding-bottom: var(--line);
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+.intro a:hover {
+  background-color: var(--accent-soft);
+  background-image: linear-gradient(currentColor, currentColor); background-size: 100% var(--line);
+}
 /* 넓은 화면: 주제 2칸, 자주 묻는 질문은 전체 폭 */
 @media (min-width: 900px) {
   .intro {

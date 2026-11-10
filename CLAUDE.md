@@ -130,6 +130,7 @@ robots.txt sitemap.xml        SEO
 ## 기능별 입구 페이지 (data-intent)
 - /pdf-split/ · /pdf-merge/ · /pdf-compress/ · /hwp-compress/ — 작업실은 하나(js 그대로), 들어온 주소의 `<html data-intent>`
   (또는 #app-root 의 data-intent)만 다르다. 메인(/)은 data-intent 없음 = 예전과 똑같이.
+- workspace.js HERO: 의도 → 작업실 큰 제목·한 줄 설명 키(ws.315~322, 3줄째 ws.189 는 공통). 메인은 ws.187·188.
 - workspace.js INTENTS: 의도 → 안내 띠 3단계 문구 키(ws.303~314). 띠는 작업실 제목 줄 아래 .ws-guide(팝업 아님), 닫으면
   localStorage 'slimkachi-guide-closed:<intent>' (try/catch). pdf-split = 올린 첫 PDF 를 골라 [나누기] 탭,
   pdf-merge = 올린 PDF·사진을 체크(문서 제외), 2개 이상이면 [N개 합치기]를 주 버튼 색으로.

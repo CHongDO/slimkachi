@@ -166,6 +166,13 @@ const INTENTS = {
   'pdf-compress': ['ws.309', 'ws.310', 'ws.311'],
   'hwp-compress': ['ws.312', 'ws.313', 'ws.314'],
 };
+/* 입구 페이지 큰 제목·한 줄 설명 (3줄째 '서버 전송 없이…' ws.189 는 공통). 메인은 ws.187·188 */
+const HERO = {
+  'pdf-split': ['ws.315', 'ws.316'],
+  'pdf-merge': ['ws.317', 'ws.318'],
+  'pdf-compress': ['ws.319', 'ws.320'],
+  'hwp-compress': ['ws.321', 'ws.322'],
+};
 const guideKey = (intent) => `slimkachi-guide-closed:${intent}`;
 /** 닫은 안내 띠 기억 (저장소를 못 쓰는 브라우저면 매번 보인다) */
 function guideClosed(intent) {
@@ -2338,8 +2345,8 @@ function template(lim, intent = '') {
     </div>` : ''}
 
     <div class="ws-hero">
-      <h2 class="ws-hero__title">${tx('ws.187')}</h2>
-      <p class="ws-hero__lead">${tx('ws.188')}</p>
+      <h2 class="ws-hero__title">${tx((HERO[intent] || [])[0] || 'ws.187')}</h2>
+      <p class="ws-hero__lead">${tx((HERO[intent] || [])[1] || 'ws.188')}</p>
       <p class="ws-hero__note">${tx('ws.189')}</p>
     </div>
 

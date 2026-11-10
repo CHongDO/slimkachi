@@ -320,6 +320,14 @@ export default {
   'ws.312': 'Add HWP·HWPX files',
   'ws.313': 'Choose a mode',
   'ws.314': '[Apply]',
+  'ws.315': 'Split PDF',
+  'ws.316': 'Pick the pages you want and split.',
+  'ws.317': 'Merge PDF',
+  'ws.318': 'PDFs and photos into one PDF.',
+  'ws.319': 'Compress PDF',
+  'ws.320': 'Text stays selectable — only images get lighter.',
+  'ws.321': 'Compress HWP files',
+  'ws.322': 'Only the photos inside HWP·HWPX are reduced.',
 
   // Shell
   'app.001': 'Couldn’t load the screen. ({id})',

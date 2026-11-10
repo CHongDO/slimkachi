@@ -48,7 +48,19 @@ body.doc {
 .doc__body p, .doc__body li { font-size: var(--font-size); color: var(--text-secondary); }
 .doc__body ul { padding-left: var(--space-5); list-style: square; }
 .doc__body li::marker { color: var(--text-accent); }
-.doc__body a { color: var(--text-link); text-underline-offset: 4px; }
+/* 본문 속 링크 (소개글·문서·가이드 공통 — shell.css .intro a 와 같은 규칙): 사이트 링크 색 + 픽셀 점 밑줄(2px 점·2px 틈),
+   가리키면 꽉 찬 밑줄 + 옅은 강조 바탕. 대비: 낮 6.1:1(바탕 5.3:1) · 밤 8.7:1(바탕 7.3:1). 줄이 바뀌어도 줄마다 밑줄 */
+.doc__body a:not(.doc__back) {
+  color: var(--text-link); text-decoration: none;
+  background-image: linear-gradient(90deg, currentColor 50%, transparent 0);
+  background-repeat: repeat-x; background-position: 0 100%; background-size: 4px var(--line);
+  padding-bottom: var(--line);
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+.doc__body a:not(.doc__back):hover {
+  background-color: var(--accent-soft);
+  background-image: linear-gradient(currentColor, currentColor); background-size: 100% var(--line);
+}
 .doc__meta { color: var(--text-muted); margin-bottom: var(--space-5); }
 .doc__back {
   --bw: var(--line); --drop: 0 calc(var(--line) + var(--px)) 0 0 var(--frame);
